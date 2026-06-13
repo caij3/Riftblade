@@ -524,12 +524,14 @@ const Weapon = {
   state: 'hand', x: 0, z: 0, h: 1, vx: 0, vz: 0,
   travelled: 0, lodgedIn: null, lodgeT: 0, angle: 0, spin: 0,
   reset() { this.state = 'hand'; this.lodgedIn = null; },
-  throwFrom(px, pz, dirAng) {
-    const c = CONFIG.player.riftthrow;
-    this.state = 'flying'; this.x = px; this.z = pz; this.h = 1.1;
-    this.vx = Math.cos(dirAng) * c.speed; this.vz = Math.sin(dirAng) * c.speed;
-    this.travelled = 0; this.angle = dirAng; this.spin = 22; this.lodgedIn = null;
-    Audio2.sfx('throw');
+  throwFrom(px, pz, dirAng, target) {
+      const c = CONFIG.player.riftthrow;
+      this.state = 'flying'; this.x = px; this.z = pz; this.h = 1.1;
+      this.vx = Math.cos(dirAng) * c.speed; this.vz = Math.sin(dirAng) * c.speed;
+      this.travelled = 0; this.angle = dirAng; this.spin = 22; this.lodgedIn = null;
+      // distance from launch point to the click, capped at maxRange
+      this.targetDist = target ? Math.min(c.maxRange, dist(px, pz, target.x, target.z)) : c.maxRange;
+      Audio2.sfx('throw');
   },
   startRecall() { if (this.state === 'stuck' || this.state === 'lodged') { this.state = 'returning'; this.lodgedIn = null; Audio2.sfx('recall'); } },
   update(dt, player, bosses) {
@@ -552,7 +554,7 @@ const Weapon = {
       if (blk) { this.state = 'stuck'; this.h = 1.2; Audio2.sfx('stick'); return; }
       // arena bounds (R-TP-03) or max range
       const p = { x: this.x, z: this.z };
-      if (World.clampPoint(p, 0.4) || this.travelled >= c.maxRange) {
+      if (World.clampPoint(p, 0.4) || this.travelled >= (this.targetDist || c.maxRange)) {
         this.x = p.x; this.z = p.z; this.state = 'stuck'; this.h = 1.0; Audio2.sfx('stick');
       }
     } else if (this.state === 'lodged') {
@@ -707,7 +709,10 @@ const Player = {
       if (!Weapon.out()) { // throw immediately
         if (this.hitstun <= 0 && this.attackT < 0 && this.spend(C.riftthrow.staminaCost)) {
           this.facing = this.aimAngle(bosses);
-          Weapon.throwFrom(this.x + Math.cos(this.facing) * 0.6, this.z + Math.sin(this.facing) * 0.6, this.facing);
+          // where the cursor is pointing, in world space
+          let target = Render.worldFromScreen(Input.mouse.x, Input.mouse.y);
+          if (this.lockOn) { const t = nearestBoss(bosses, this.x, this.z); if (t) target = { x: t.x, z: t.z }; }
+          Weapon.throwFrom(this.x + Math.cos(this.facing) * 0.6, this.z + Math.sin(this.facing) * 0.6, this.facing, target);
           this.rmbConsumedByRecall = true; // throw consumes this press cycle
         } else this.rmbConsumedByRecall = true;
       }
