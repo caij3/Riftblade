@@ -208,50 +208,50 @@ const CONFIG = {
       lodgeTime: 3.0,                 // lodged in boss before falling at its feet
       teleportCooldown: 0,            // removed — teleport is stamina-gated instead
       teleportCost: 0,
-      teleportIFrames: 0.5,
+      teleportIFrames: 0.0,
       riftstrikeDamage: 15, riftstrikeStamina: 0, riftstrikeStaggerRange: 2.6,
       recallHold: 0.6, recallSpeed: 38
     },
-    dodge: { distance: 4.0, duration: 0.5, iFrames: 0.3, cooldown: 1.0, staminaCost: 30 }, // doubled
-    stamina: { onHitRegen: 8, riftstrikeRegen: 0, oocDelay: 10.0, oocRate: 0 }, // melee hits only
-    hitstun: 0.0, contactTick: 0.6
+    dodge: { distance: 4.0, dashDistance: 4.5, duration: 0.35, iFrames: 0.3, cooldown: 1.0, staminaCost: 30 },
+    stamina: { onHitRegen: 6, riftstrikeRegen: 0, oocDelay: 10.0, oocRate: 0 }, // melee hits only
+    hitstun: 0.0
   },
   warden: {
-    name: 'THE CRUCIBLE WARDEN', hp: 600, phase2At: 0.5,
+    name: 'THE CRUCIBLE WARDEN', hp: 500, phase2At: 0.5,
     moveSpeed: [3.5, 4.5], contactPush: 8, radius: 1.5, height: 3.5,
     stagger: { window: 3.0, threshold: 60, duration: 0.8, immunity: 10.0 },  // threshold staggers can't chain
     idle: [0.9, 1.3],
     transitionTime: 1.0,              // kneel, core exposed — free damage window
     attacks: {
-      W1: { windup: 0.8, damage: 35, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
-      W2: { windup: 0.7, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0 },
-      W3: { windup: 1.0, damage: 30, burn: 3, rMin: 1.0, rMax: 8.0, expandTime: 1.2, band: 0.9 },
+      W1: { windup: 0.8, damage: 45, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
+      W2: { windup: 0.7, damage: 35, range: 4.5, arc: Math.PI, recovery: 1.0 },
+      W3: { windup: 1.0, damage: 40, burn: 3, rMin: 1.0, rMax: 8.0, expandTime: 1.2, band: 0.9 },
       W4: { windup: 0.5, damage: 15, hop: 6.0, projSpeed: 20.0, projRadius: 0.5, splash: 1.4,
-            countP1: 3, countP2: 5, spread: 0.42, curveRate: 1.4 },  // volleys alternate straight / curved
-      W5: { windup: 0.6, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 4.0, trailDps: 3 },
-      W6: { windup: 0.7, damage: 30, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.85, recovery: 2.0, trackSpeed: 5.5 },
-      W7: { windup: 1.2, damage: 45, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0 }
+            countP1: 5, countP2: 7, spread: 0.42, curveRate: 1.4 },  // volleys alternate straight / curved
+      W5: { windup: 0.6, damage: 35, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 4.0, trailDps: 3 },
+      W6: { windup: 0.7, damage: 40, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.85, recovery: 2.0, trackSpeed: 5.5 },
+      W7: { windup: 1.2, damage: 65, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0 }
     },
     coreRiftstrikeMult: 2.0,
     arena: { type: 'circle', radius: 15, braziers: 4, brazierRadius: 0.8 }
   },
   choir: {
-    name: 'SISTER VESSEL, THE THRESHING CHOIR', hp: 750, phase2At: 0.4,
+    name: 'SISTER VESSEL, THE THRESHING CHOIR', hp: 650, phase2At: 0.4,
     moveSpeed: [7.0, 8.0], dashSpeed: 14.0, contactPush: 8, radius: 0.8, height: 2.5,
-    stagger: { window: 3.0, threshold: 20, duration: 0.8, immunity: 10.0 },
+    stagger: { window: 3.0, threshold: 80, duration: 0.8, immunity: 10.0 },
     idle: [0.7, 1.1],
     transitionTime: 1.0,
     enrageTime: 420, enrageShardMult: 1.5,   // 7 min anti-stall
     attacks: {
-      C1: { windup: 0.5, hits: 4, damage: 12, gap: 0.4, step: 2.5, range: 2.4, arc: 1.6, recovery: 1.2 },
-      C2: { windup: 0.8, shards: 3, shardsP2: 5, damage: 10, speed: 20, turnRate: 1.2, life: 9 },
+      C1: { windup: 0.5, hits: 4, damage: 18, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6, recovery: 1.2 },
+      C2: { windup: 0.8, shards: 3, shardsP2: 5, damage: 15, speed: 20, turnRate: 1.3, life: 9 },
       C3: { windup: 0.3, distMin: 10, distMax: 14, dashTime: 0.45 },
       C4: { windup: 1.0, damage: 18, radius: 4.0, hits: 2, gap: 0.3, recovery: 1.4 },
-      C5: { windup: 0.5, hits: 5, damage: 12, gap: 0.4, step: 2.5, range: 2.4, arc: 1.6,
-            finisher: 22, finisherTele: 0.2, leap: 5.0, finisherRadius: 2.2, recovery: 1.2 },
-      C6: { windup: 0.5, rMin: 3, rMax: 7, growTime: 1.0, dps: 12, recovery: 0.8 }
+      C5: { windup: 0.5, hits: 5, damage: 18, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6,
+            finisher: 32, finisherTele: 0.2, leap: 5.0, finisherRadius: 2.5, recovery: 1.2 },
+      C6: { windup: 0.8, rMin: 3, rMax: 13, growTime: 1.0, dps: 20, recovery: 0.8 }
     },
-    echo: { hp: 60, damageMult: 0.5, killStamina: 0, count: 2, speed: 5.0 },  // melee-only energy economy
+    echo: { hp: 80, damageMult: 0.8, killStamina: 0, count: 2, speed: 5.0 },  // melee-only energy economy
     behavior: { c4GlueTime: 5.0, c3Interval: 12.0, c3DamageTrigger: 100, c3DamageWindow: 4.0 },
     arena: { type: 'rect', w: 35, h: 20, pillarRows: [-6, 6], pillarXs: [-12, -4, 4, 12], pillarRadius: 0.9 }
   },
@@ -586,7 +586,7 @@ const Player = {
   vx: 0, vz: 0, moving: false, 
   // combat state
   attackT: -1, attackIdx: 0, attackUnarmed: false, attackHitDone: false, comboWindow: 0,
-  dodgeT: -1, dodgeCd: 0, dodgeDx: 0, dodgeDz: 0,
+  dodgeT: -1, dodgeCd: 0, dodgeDx: 0, dodgeDz: 0, dodgeDist: 0,
   iFrames: 0, hitstun: 0, contactImmune: 0,
   tpCd: 0, recallArmed: false, rmbConsumedByRecall: false,
   lockOn: false, dead: false,
@@ -644,8 +644,12 @@ const Player = {
 
     if (inDodge) {
       this.dodgeT += dt;
-      const sp = C.dodge.distance / C.dodge.duration;
-      this.x += this.dodgeDx * sp * dt; this.z += this.dodgeDz * sp * dt;
+      // front-loaded burst: launches fast, eases to a stop. Integral of peak*(1-p)
+      // over the duration equals dodgeDist, so peak = 2*dist/duration.
+      const p = clamp(this.dodgeT / C.dodge.duration, 0, 1);
+      const peak = 2 * this.dodgeDist / C.dodge.duration;
+      const v = peak * (1 - p);
+      this.x += this.dodgeDx * v * dt; this.z += this.dodgeDz * v * dt;
       if (this.dodgeT >= C.dodge.duration) this.dodgeT = -1;
     } else if (this.hitstun <= 0 && !this.dead) {
       const spd = inAttack ? C.moveSpeed * 0.25 : C.moveSpeed;
@@ -725,8 +729,8 @@ const Player = {
           this.attackT = -1;
           this.dodgeT = 0; this.dodgeCd = C.dodge.cooldown;
           this.iFrames = Math.max(this.iFrames, C.dodge.iFrames);  // i-frames from frame 1
-          if (this.moving) { const l = Math.hypot(mx, mz) || 1; this.dodgeDx = mx / l; this.dodgeDz = mz / l; }
-          else { this.dodgeDx = -Math.cos(this.facing); this.dodgeDz = -Math.sin(this.facing); } // R-DG-02 backstep
+          if (this.moving) { const l = Math.hypot(mx, mz) || 1; this.dodgeDx = mx / l; this.dodgeDz = mz / l; this.dodgeDist = C.dodge.dashDistance; } // moving = full lunge
+          else { this.dodgeDx = -Math.cos(this.facing); this.dodgeDz = -Math.sin(this.facing); this.dodgeDist = C.dodge.distance; } // R-DG-02 stationary backstep
           Audio2.sfx('dodge');
         }
       }
@@ -762,8 +766,8 @@ const Player = {
     }
     if (Game.mode === 'tutorial') Tutorial.complete('teleport');
   },
-  takeDamage(amount, source = '') {
-    if (this.dead || this.iFrames > 0) return false;
+  takeDamage(amount, source = '',ignoreIFrames = false) {
+    if (this.dead || (this.iFrames > 0 && !ignoreIFrames)) return false;
     this.hp -= amount; this.stats.hitsTaken++; Game.runStats.hitsTaken++;
     this.combatTimer = 0; this.hurtFlash = 0.4;
     this.hitstun = CONFIG.player.hitstun;
@@ -852,7 +856,7 @@ function updateHazards(dt, boss) {
         if (!hz.done) {
           let safe = false;
           for (const s of hz.safe) if (dist(s.x, s.z, Player.x, Player.z) < s.r) { safe = true; break; }
-          if (!safe) Player.takeDamage(hz.dmg, 'eruption');
+          if (!safe) Player.takeDamage(hz.dmg, 'eruption', true);
           hz.done = true; Audio2.sfx('fire'); World.addShake(0.8);
         }
         if (hz.t > 0.6) World.hazards.splice(i, 1);
@@ -864,7 +868,7 @@ function updateHazards(dt, boss) {
         hz.x = hz.owner.x; hz.z = hz.owner.z;
         if (dist(hz.x, hz.z, Player.x, Player.z) < hz.r + Player.radius) {
           hz.tick = (hz.tick || 0) - dt;
-          if (hz.tick <= 0) { Player.takeDamage(c.dps * 0.25, 'vortex'); hz.tick = 0.25; }
+          if (hz.tick <= 0) { Player.takeDamage(c.dps * 0.25, 'vortex', true); hz.tick = 0.25; }
         }
         if (hz.t >= c.growTime || hz.owner.dead || hz.owner.staggered) { hz.owner.vortexActive = false; World.hazards.splice(i, 1); }
         break;
@@ -884,8 +888,7 @@ class Boss {
     this.attack = null; this.lastAttacks = [];
     this.staggered = false; this.staggerT = 0; this.staggerCd = 0;
     this.recentDmg = []; // [{t, amt}] for stagger threshold window
-    this.flash = 0; this.coreExposed = false;
-    this.contactTick = 0; this.animT = 0;
+    this.flash = 0; this.coreExposed = false; this.animT = 0;
   }
   takeDamage(amount, source) {
     if (this.dead || this.untargetable) return;
@@ -978,7 +981,7 @@ class Boss {
 
 /* --------------------------- BOSS 1: Crucible Warden ---------------------- */
 class Warden extends Boss {
-  constructor() { super(CONFIG.warden, 2, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.eruptSafe = null; this.coalAlt = false; }
+  constructor() { super(CONFIG.warden, 2, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.atkCount = 0; this.eruptSafe = null; this.coalAlt = false; }
   onPhase2() { this.coreExposed = true; this.coreT = this.cfg.transitionTime; }
   update(dt) {
     if (this.baseUpdate(dt)) { this.contactPush(dt); return; }
@@ -998,20 +1001,27 @@ class Warden extends Boss {
         this.glue = (this.glue || 0) + (d < 3.5 ? dt : -dt * 2); this.glue = Math.max(0, this.glue);
         if (this.stateT >= this.idleFor) {
           let id = null;
-          const opts = [];
-          if (this.phase === 1) {
-            if (this.glue > 6) opts.push({ id: 'W3', ok: true });
-            if (d < 4.5) opts.push({ id: 'W1', ok: true }, { id: 'W1', ok: true }, { id: 'W2', ok: true });
-            else if (d < 5.5) opts.push({ id: 'W2', ok: true });
-            if (d >= 5.5 && d < 14 && Math.random() < 0.55) opts.push({ id: 'W4', ok: true });
+          const forceW7 = (this.phase === 2 && this.atkCount % 5 === 4);  // every 5th attack is Eruption
+          if (forceW7) {
+            id = 'W7';
           } else {
-            if (this.glue > 6 || Math.random() < 0.22) opts.push({ id: 'W7', ok: true });
-            if (d < 4.5) opts.push({ id: 'W6', ok: true }, { id: 'W6', ok: true }, { id: 'W5', ok: true });
-            else if (d < 5.5) opts.push({ id: 'W5', ok: true });
-            if (d >= 5.5 && d < 16 && Math.random() < 0.5) opts.push({ id: 'W4', ok: true });
+            const opts = [];
+            if (this.phase === 1) {
+              if (this.glue > 6) opts.push({ id: 'W3', ok: true });
+              if (d < 4.5) opts.push({ id: 'W1', ok: true }, { id: 'W1', ok: true }, { id: 'W2', ok: true });
+              else if (d < 5.5) opts.push({ id: 'W2', ok: true });
+              if (d >= 5.5 && d < 14 && Math.random() < 0.55) opts.push({ id: 'W4', ok: true });
+            } else {
+              if (this.glue > 6 || Math.random() < 0.22) opts.push({ id: 'W7', ok: true });
+              if (d < 4.5) opts.push({ id: 'W6', ok: true }, { id: 'W6', ok: true }, { id: 'W5', ok: true });
+              else if (d < 5.5) opts.push({ id: 'W5', ok: true });
+              if (d >= 5.5 && d < 16 && Math.random() < 0.5) opts.push({ id: 'W4', ok: true });
+            }
+            id = this.pickWeighted(opts);
+            if (!id) { this.idleFor = this.stateT + 0.35; break; } // nothing fits: keep closing distance
           }
-          id = this.pickWeighted(opts);
-          if (!id) { this.idleFor = this.stateT + 0.35; break; } // nothing fits: keep closing distance
+          this.atkCount++;
+
           if (id === 'W3' || id === 'W7') this.glue = 0;
           this.beginAttack(id);
           if (id === 'W6') this.slamCount = 0;
@@ -2043,8 +2053,9 @@ const Game = {
     this.paused = false;
   },
   retry() { // HP fully restores between attempts; boss fully resets
-    UI.hideAll();
-    this.startFight(this.mode === 'boss2' ? 'boss2' : 'boss1');
+      UI.hideAll();
+      if (this.isRush) { this.startFight('boss1', true); }  // rush: death sends you to the top
+      else this.startFight(this.mode === 'boss2' ? 'boss2' : 'boss1');
   },
   onPlayerDeath() {
     this.runStats.deaths++;
@@ -2069,10 +2080,14 @@ const Game = {
     }, 1400);
   },
   continueAfterVictory() {
-    UI.hideAll();
-    if (this.pendingVictory === 'warden') { this.startFight('boss2'); }
-    else this.showResults();
-    this.pendingVictory = null;
+      UI.hideAll();
+      if (this.pendingVictory === 'warden') {
+        const carryHp = Player.hp  // rush: no respite
+        this.startFight('boss2');
+        if (this.isRush) { Player.hp = carryHp; }
+      }
+      else this.showResults();
+      this.pendingVictory = null;
   },
   showResults() {
     SAVE.bossRushUnlocked = true; UI.updateBossRushBtn();
