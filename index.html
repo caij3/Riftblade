@@ -236,7 +236,7 @@ const CONFIG = {
     arena: { type: 'circle', radius: 15, braziers: 4, brazierRadius: 0.8 }
   },
   choir: {
-    name: 'SISTER VESSEL, THE THRESHING CHOIR', hp: 750, phase2At: 0.4,
+    name: 'SISTER VESSEL, THE THRESHING CHOIR', hp: 750, phase2At: 0.5,
     moveSpeed: [7.0, 8.0], dashSpeed: 14.0, contactPush: 8, radius: 0.8, height: 2.5,
     stagger: { window: 3.0, threshold: 80, duration: 0.8, immunity: 10.0 },
     idle: [0.7, 1.1],
@@ -246,13 +246,13 @@ const CONFIG = {
       C1: { windup: 0.5, hits: 4, damage: 18, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6, recovery: 1.2 },
       C2: { windup: 0.8, shards: 3, shardsP2: 5, damage: 12, speed: 20, turnRate: 1.25, life: 9 },
       C3: { windup: 0.3, distMin: 10, distMax: 14, dashTime: 0.45 },
-      C4: { windup: 1.0, damage: 18, radius: 4.0, hits: 2, gap: 0.3, recovery: 1.4 },
+      C4: { windup: 0.8, damage: 18, radius: 5.0, hits: 2, gap: 0.3, recovery: 1.4 },
       C5: { windup: 0.5, hits: 5, damage: 18, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6,
             finisher: 28, finisherTele: 0.0, leap: 5.0, finisherRadius: 2.5, recovery: 1.2 },
-      C6: { windup: 0.8, rMin: 3, rMax: 13, growTime: 0.5, dps: 70, recovery: 0.8 }
+      C6: { windup: 0.8, rMin: 3, rMax: 12, growTime: 0.6, dps: 70, recovery: 0.8 }
     },
     echo: { hp: 80, damageMult: 0.5, killStamina: 0, count: 2, speed: 5.0 },  // melee-only energy economy
-    behavior: { c4GlueTime: 5.0, c3Interval: 12.0, c3DamageTrigger: 100, c3DamageWindow: 4.0 },
+    behavior: { c4GlueTime: 1.2, c3Interval: 12.0, c3DamageTrigger: 100, c3DamageWindow: 4.0 },
     arena: { type: 'rect', w: 35, h: 20, pillarRows: [-6, 6], pillarXs: [-12, -4, 4, 12], pillarRadius: 0.9 }
   },
   tutorial: { arena: { type: 'circle', radius: 12 }, dummyHp: 80 }
@@ -1222,7 +1222,7 @@ class Choir extends Boss {
             if (id === 'C4') this.glue = 0;
           } else {
             id = this.pickWeighted([
-              { id: 'C6', ok: this.glue > B.c4GlueTime || Math.random() < 0.22 },
+              { id: 'C6', ok: this.glue > B.c4GlueTime || Math.random() < 0.32 },
               { id: 'C5', ok: d < 3.8 }, { id: 'C5', ok: d < 3.8 },
               { id: 'C2', ok: d >= 3.8 }
             ]) || (d < 3.8 ? 'C5' : 'C2');
