@@ -202,7 +202,7 @@ const CONFIG = {
       activeStart: 0.14, activeEnd: 0.3,
       onHitStamina: 8                 // the ONLY energy recovery in the game
     },
-    unarmed: { damage: 4, staminaCost: 0, range: 1.6, arc: 1.6, swingTime: 0.34, activeStart: 0.1, activeEnd: 0.22 },
+    unarmed: { damage: 4, staminaCost: 0, range: 1.6, arc: 1.6, swingTime: 0.42, activeStart: 0.1, activeEnd: 0.22 },
     riftthrow: {
       maxRange: 20, speed: 32, damage: 8, staminaCost: 50,   // doubled; no cooldown — stamina-gated
       lodgeTime: 3.0,                 // lodged in boss before falling at its feet
@@ -212,24 +212,24 @@ const CONFIG = {
       riftstrikeDamage: 15, riftstrikeStamina: 0, riftstrikeStaggerRange: 2.6,
       recallHold: 0.6, recallSpeed: 38
     },
-    dodge: { distance: 4.0, duration: 0.35, iFrames: 0.3, cooldown: 1.0, staminaCost: 40 }, // doubled
+    dodge: { distance: 4.0, duration: 0.5, iFrames: 0.3, cooldown: 1.0, staminaCost: 40 }, // doubled
     stamina: { onHitRegen: 8, riftstrikeRegen: 0, oocDelay: 10.0, oocRate: 0 }, // melee hits only
-    hitstun: 0.35, contactTick: 0.6
+    hitstun: 0.0, contactTick: 0.6
   },
   warden: {
     name: 'THE CRUCIBLE WARDEN', hp: 600, phase2At: 0.5,
-    moveSpeed: [3.5, 4.5], contactDamage: 10, radius: 1.5, height: 3.5,
+    moveSpeed: [3.5, 4.5], contactPush: 8, radius: 1.5, height: 3.5,
     stagger: { window: 3.0, threshold: 60, duration: 0.8, immunity: 8.0 },  // threshold staggers can't chain
     idle: [0.9, 1.5],
     transitionTime: 1.0,              // kneel, core exposed — free damage window
     attacks: {
       W1: { windup: 0.8, damage: 35, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
-      W2: { windup: 0.6, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0 },
+      W2: { windup: 0.7, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0 },
       W3: { windup: 1.0, damage: 30, burn: 3, rMin: 1.0, rMax: 8.0, expandTime: 1.2, band: 0.9 },
       W4: { windup: 0.5, damage: 15, hop: 6.0, projSpeed: 20.0, projRadius: 0.5, splash: 1.4,
             countP1: 3, countP2: 5, spread: 0.42, curveRate: 1.4 },  // volleys alternate straight / curved
-      W5: { windup: 0.6, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 4.0, trailDps: 3 },
-      W6: { windup: 0.7, damage: 30, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.85, recovery: 2.0, trackSpeed: 5.5 },
+      W5: { windup: 0.7, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 4.0, trailDps: 3 },
+      W6: { windup: 0.8, damage: 30, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.85, recovery: 2.0, trackSpeed: 5.5 },
       W7: { windup: 1.2, damage: 45, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0 }
     },
     coreRiftstrikeMult: 2.0,
@@ -237,8 +237,8 @@ const CONFIG = {
   },
   choir: {
     name: 'SISTER VESSEL, THE THRESHING CHOIR', hp: 750, phase2At: 0.4,
-    moveSpeed: [7.0, 8.0], dashSpeed: 14.0, contactDamage: 8, radius: 0.8, height: 2.5,
-    stagger: { window: 3.0, threshold: 80, duration: 0.8, immunity: 8.0 },
+    moveSpeed: [7.0, 8.0], dashSpeed: 14.0, contactPush: 8, radius: 0.8, height: 2.5,
+    stagger: { window: 3.0, threshold: 20, duration: 0.8, immunity: 8.0 },
     idle: [0.7, 1.3],
     transitionTime: 1.0,
     enrageTime: 420, enrageShardMult: 1.5,   // 7 min anti-stall
@@ -944,11 +944,17 @@ class Boss {
     if (d < range + Player.radius && Math.abs(angDiff(this.facing, angTo(this.x, this.z, Player.x, Player.z))) < arc / 2)
       Player.takeDamage(dmg, 'boss-melee');
   }
-  contactDamage(dt) {
+  contactPush(dt) {
     if (this.dead || this.untargetable) return;
-    this.contactTick = Math.max(0, this.contactTick - dt);
-    if (this.contactTick <= 0 && this.distP() < this.radius + Player.radius + 0.1) {
-      if (Player.takeDamage(this.cfg.contactDamage, 'contact')) this.contactTick = CONFIG.player.contactTick;
+    const min = this.radius + Player.radius;          // bodies shouldn't overlap
+    const d = this.distP();
+    if (d < min) {
+      let a = (d > 0.001) ? angTo(this.x, this.z, Player.x, Player.z) : this.facing + Math.PI;
+      Player.x = this.x + Math.cos(a) * min;           // hard separation
+      Player.z = this.z + Math.sin(a) * min;
+      Player.x += Math.cos(a) * this.cfg.contactPush * dt;  // brief outward shove
+      Player.z += Math.sin(a) * this.cfg.contactPush * dt;
+      World.clampPoint(Player, Player.radius);
     }
   }
   pickWeighted(options) { // never repeat the same attack 3× in a row; null = nothing valid (caller keeps approaching)
@@ -973,10 +979,10 @@ class Boss {
 
 /* --------------------------- BOSS 1: Crucible Warden ---------------------- */
 class Warden extends Boss {
-  constructor() { super(CONFIG.warden, 0, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.eruptSafe = null; this.coalAlt = false; }
+  constructor() { super(CONFIG.warden, 2, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.eruptSafe = null; this.coalAlt = false; }
   onPhase2() { this.coreExposed = true; this.coreT = this.cfg.transitionTime; }
   update(dt) {
-    if (this.baseUpdate(dt)) { this.contactDamage(dt); return; }
+    if (this.baseUpdate(dt)) { this.contactPush(dt); return; }
     const A = this.cfg.attacks, spd = this.cfg.moveSpeed[this.phase - 1];
     this.coreT = Math.max(0, this.coreT - dt);
     if (this.coreExposed && this.coreT <= 0 && this.state !== 'transition') this.coreExposed = false;
@@ -1047,7 +1053,7 @@ class Warden extends Boss {
         break;
       }
     }
-    this.contactDamage(dt);
+    this.contactPush(dt);
     // braziers: heavy attacks destroy cover in range
     if (this.state === 'strike' && ['W1', 'W2', 'W5', 'W6'].includes(this.attack)) {
       for (const b of World.braziers) if (b.alive && dist(this.x, this.z, b.x, b.z) < 5.2) { b.alive = false; World.spark(b.x, b.z, 1.5, '#ff7a2f', 14, 6); Audio2.sfx('slam'); }
@@ -1106,7 +1112,7 @@ class Warden extends Boss {
 class EchoVessel extends Boss {
   constructor(x, z, parent) {
     super({ ...CONFIG.choir, hp: CONFIG.choir.echo.hp, idle: [1.2, 2.0], stagger: { window: 1, threshold: 9999, duration: 0.8 },
-            contactDamage: CONFIG.choir.contactDamage * CONFIG.choir.echo.damageMult }, x, z);
+            contactPush: CONFIG.choir.contactPush * CONFIG.choir.echo.damageMult }, x, z);
     this.kind = 'echo'; this.parent = parent; this.radius = 0.7; this.height = 2.3;
     this.hitIdx = 0; this.maxHp = CONFIG.choir.echo.hp; this.hp = this.maxHp;
   }
@@ -1125,7 +1131,7 @@ class EchoVessel extends Boss {
     if (Weapon.lodgedIn === this) { Weapon.state = 'stuck'; Weapon.lodgedIn = null; Weapon.h = 0.3; }
   }
   update(dt) {
-    if (this.baseUpdate(dt)) { this.contactDamage(dt); return; }
+    if (this.baseUpdate(dt)) { this.contactPush(dt); return; }
     const A = CONFIG.choir.attacks, mult = CONFIG.choir.echo.damageMult;
     this.stateT += dt;
     switch (this.state) {
@@ -1156,7 +1162,7 @@ class EchoVessel extends Boss {
         if (this.stateT >= 1.0) { this.state = 'idle'; this.stateT = 0; this.idleFor = rand(1.2, 2.0); this.attack = null; }
         break;
     }
-    this.contactDamage(dt);
+    this.contactPush(dt);
   }
 }
 
@@ -1176,7 +1182,7 @@ class Choir extends Boss {
   }
   update(dt) {
     this.fightT += dt; this.sinceC3 += dt;
-    if (this.baseUpdate(dt)) { this.contactDamage(dt); return; }
+    if (this.baseUpdate(dt)) { this.contactPush(dt); return; }
     const A = this.cfg.attacks, B = this.cfg.behavior, spd = this.cfg.moveSpeed[this.phase - 1];
     this.stateT += dt;
     const d = this.distP();
@@ -1241,7 +1247,7 @@ class Choir extends Boss {
         break;
       }
     }
-    this.contactDamage(dt);
+    this.contactPush(dt);
   }
   strikeUpdate(dt, A) {
     switch (this.attack) {
@@ -1333,7 +1339,7 @@ class Choir extends Boss {
 class Dummy extends Boss {
   constructor() {
     super({ name: 'RIFT EFFIGY', hp: CONFIG.tutorial.dummyHp, phase2At: -1, moveSpeed: [0, 0],
-      contactDamage: 0, radius: 0.7, height: 2.0, stagger: { window: 3, threshold: 9999, duration: 0.6 },
+      contactPush: 0, radius: 0.7, height: 2.0, stagger: { window: 3, threshold: 9999, duration: 0.6 },
       idle: [9, 9], transitionTime: 0, attacks: {} }, 0, -4);
     this.kind = 'dummy';
   }
