@@ -36,7 +36,7 @@ RB.define('config', function () {
       stagger: { window: 3.0, threshold: 60, duration: 0.8, immunity: 10.0 },
       idle: [0.9, 1.3],
       transitionTime: 1.0,
-      behavior: { approachDist: 3.2, glueBuildRange: 5.5, glueDecayMult: 2.0, w3GlueThreshold: 1.2, w7GlueThreshold: 3, w7Chance: 0.22 },
+      behavior: { approachDist: 3.2, glueBuildRange: 5.5, glueDecayMult: 2.0, w3GlueThreshold: 1.2, w7GlueThreshold: 1.2, w7Chance: 0.30 },
       attacks: {
         W1: { windup: 0.8, damage: 40, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
         W2: { windup: 0.7, damage: 30, range: 4.5, arc: Math.PI, recovery: 1.0 },
