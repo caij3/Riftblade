@@ -10,7 +10,7 @@ RB.define('warden', function (require) {
   const proj = () => require('projectiles');
 
   class Warden extends Boss {
-    constructor() { super(CONFIG.warden, 2, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.atkCount = 0; this.eruptSafe = null; this.coalAlt = false; }
+    constructor() { super(CONFIG.warden, 2, -6); this.kind = 'warden'; this.coreT = 0; this.slamCount = 0; this.eruptSafe = null; this.coalAlt = false; }
     onPhase2() { this.coreExposed = true; this.coreT = this.cfg.transitionTime; }
     update(dt) {
       if (this.baseUpdate(dt)) { this.contactPush(dt); return; }
@@ -31,26 +31,20 @@ RB.define('warden', function (require) {
           this.glue = (this.glue || 0) + (d < B.glueBuildRange ? dt : -dt * B.glueDecayMult); this.glue = Math.max(0, this.glue);
           if (this.stateT >= this.idleFor) {
             let id = null;
-            const forceW7 = (this.phase === 2 && this.atkCount % 5 === 4);
-            if (forceW7) {
-              id = 'W7';
+            const opts = [];
+            if (this.phase === 1) {
+              if (this.glue > B.w3GlueThreshold) opts.push({ id: 'W3', ok: true });
+              if (d < 4.5) opts.push({ id: 'W1', ok: true }, { id: 'W1', ok: true }, { id: 'W2', ok: true });
+              else if (d < 5.5) opts.push({ id: 'W2', ok: true });
+              if (d >= 5.5 && d < 14 && Math.random() < 0.55) opts.push({ id: 'W4', ok: true });
             } else {
-              const opts = [];
-              if (this.phase === 1) {
-                if (this.glue > B.w3GlueThreshold) opts.push({ id: 'W3', ok: true });
-                if (d < 4.5) opts.push({ id: 'W1', ok: true }, { id: 'W1', ok: true }, { id: 'W2', ok: true });
-                else if (d < 5.5) opts.push({ id: 'W2', ok: true });
-                if (d >= 5.5 && d < 14 && Math.random() < 0.55) opts.push({ id: 'W4', ok: true });
-              } else {
-                if (this.glue > B.w7GlueThreshold || Math.random() < B.w7Chance) opts.push({ id: 'W7', ok: true });
-                if (d < 4.5) opts.push({ id: 'W6', ok: true }, { id: 'W6', ok: true }, { id: 'W5', ok: true });
-                else if (d < 5.5) opts.push({ id: 'W5', ok: true });
-                if (d >= 5.5 && d < 16 && Math.random() < 0.5) opts.push({ id: 'W4', ok: true });
-              }
-              id = this.pickWeighted(opts);
-              if (!id) { this.idleFor = this.stateT + 0.35; break; }
+              if (this.glue > B.w7GlueThreshold || Math.random() < B.w7Chance) opts.push({ id: 'W7', ok: true });
+              if (d < 4.5) opts.push({ id: 'W6', ok: true }, { id: 'W6', ok: true }, { id: 'W5', ok: true });
+              else if (d < 5.5) opts.push({ id: 'W5', ok: true });
+              if (d >= 5.5 && d < 16 && Math.random() < 0.5) opts.push({ id: 'W4', ok: true });
             }
-            this.atkCount++;
+            id = this.pickWeighted(opts);
+            if (!id) { this.idleFor = this.stateT + 0.35; break; }
 
             if (id === 'W3' || id === 'W7') this.glue = 0;
             this.beginAttack(id);
