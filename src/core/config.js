@@ -70,13 +70,52 @@ RB.define('config', function () {
       behavior: { c4GlueTime: 1.2, glueBuildRange: 4, glueDecayMult: 2.0, c3Interval: 12.0, c3DamageTrigger: 100, c3DamageWindow: 4.0 },
       arena: { type: 'rect', w: 35, h: 20, pillarRows: [-6, 6], pillarXs: [-12, -4, 4, 12], pillarRadius: 0.9 }
     },
+    shepherd: {
+      name: 'OSSAREN, THE GRAVE-SHEPHERD', hp: 800, phase2At: 0.5,
+      moveSpeed: [6.0, 7.0], contactPush: 8, radius: 1.0, height: 3.0,
+      stagger: { window: 3.0, threshold: 80, duration: 0.8, immunity: 10.0 },
+      idle: [1.0, 1.5],
+      transitionTime: 1.0,
+      enrageTime: 420, enrageLanceMult: 1.5,
+      coreRiftstrikeMult: 2.0,        // N7-interrupt Riftstrike (coreExposed) deals 2x
+      riftstrikeNoStagger: true,      // Boss-3 exception: pinned, not staggered (R-NEC-06)
+      behavior: { approachDist: 6.0, graveStepRange: 3.5, n7Interval: 12.0 },
+      risen: {
+        hp: 24, hpBloated: 24, killStamina: 0, speed: 3.0,
+        burstTelegraph: 0.5, burstRadius: 3.0, burstDamage: 18,
+        spawnRadius: 1.8, spawnDelay: 0.4, spawnDamage: 12,
+        melee: { windup: 0.5, hits: 1, damage: 12, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6 }
+      },
+      attacks: {
+        N1: { windup: 0.7, damage: 24, speed: 14.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
+        N2: { windup: 0.9, recovery: 0.8 },
+        N3: { windup: 0.5, recovery: 0.5 },
+        N4: { windup: 1.5, radius: 4.0, campTime: 2.0, expandTime: 2.0, life: 6.0, dps: 6, dpsP2: 8, recovery: 1.0 },
+        N5: { windup: 0.6, range: 3.0, arc: Math.PI, damage: 22, recovery: 1.0 },
+        N6: { windup: 0.9, recovery: 0.8 },
+        N7: { windup: 2.0, radius: 5.0, safeRadius: 4.5, recovery: 1.5 },
+        N8: { windup: 1.2, arm: 0.4, damage: 28, band: 2.0, length: 20.0, life: 5.0, dps: 8, recovery: 1.0 }
+      },
+      arena: { type: 'circle', radius: 14, graves: 30,
+        // invisible anchor points the Shepherd Grave-Steps between and seeds Risen on
+        anchors: [
+          { x: 0,   z: 0   },
+          { x: 0,   z: -10 },
+          { x: 10,  z: 0   },
+          { x: 0,   z: 10  },
+          { x: -10, z: 0   }
+        ]
+      }
+    },
     encounters: {
-      campaign: ['warden', 'choir'],
+      campaign: ['warden', 'choir', 'shepherd'],
       list: {
         warden: { label: 'Warden', theme: 'forge',  music: 'warden', spawn: [0, 10],
                   intro: 'THE CRUCIBLE WARDEN BARS THE GATE', victory: 'THE FURNACE GUTTERS' },
         choir:  { label: 'Choir',  theme: 'chapel', music: 'choir',  spawn: [0, 7],
-                  intro: 'A HYMN RISES IN THE NAVE',          victory: 'THE CHOIR FALLS SILENT' }
+                  intro: 'A HYMN RISES IN THE NAVE',          victory: 'THE CHOIR FALLS SILENT' },
+        shepherd: { label: 'Shepherd', theme: 'ossuary', music: 'shepherd', spawn: [0, 10],
+                  intro: 'OSSAREN HERDS THE DEAD',            victory: 'THE OSSUARY GOES STILL' }
       }
     },
     tutorial: { arena: { type: 'circle', radius: 12 }, dummyHp: 80 }

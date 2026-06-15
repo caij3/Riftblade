@@ -184,9 +184,9 @@ RB.define('player', function (require) {
       world().spark(this.x, this.z, 1, '#46e0c8', 16, 8);
       if (wasLodgedIn && !wasLodgedIn.dead) {
         let dmg = C.riftstrikeDamage;
-        if (wasLodgedIn.coreExposed) dmg *= CONFIG.warden.coreRiftstrikeMult;
+        if (wasLodgedIn.coreExposed) dmg *= (wasLodgedIn.cfg.coreRiftstrikeMult || 1);
         wasLodgedIn.takeDamage(dmg, 'riftstrike');
-        wasLodgedIn.stagger();
+        if (!wasLodgedIn.cfg.riftstrikeNoStagger) wasLodgedIn.stagger();
         if (C.riftstrikeStamina > 0) this.gainStamina(C.riftstrikeStamina);
         this.combatTimer = 0;
         audio().sfx('riftstrike'); world().addShake(0.5);

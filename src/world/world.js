@@ -4,16 +4,16 @@
    lists by going through world().<method> or by pushing onto the arrays the
    accessors hand back. Only cross-file call here is game() for the shake toggle. */
 RB.define('world', function (require) {
-  const { TAU, dist, rand } = require('helpers');
+  const { TAU, dist, rand, pick } = require('helpers');
   const game = () => require('game');
 
   const World = {
-    arena: null, pillars: [], braziers: [],
+    arena: null, pillars: [], braziers: [], props: [],
     projectiles: [], hazards: [], fx: [], dmgNums: [],
     shake: 0, slowmo: 0,
     reset(arenaCfg) {
       this.arena = arenaCfg; this.projectiles = []; this.hazards = []; this.fx = []; this.dmgNums = [];
-      this.pillars = []; this.braziers = []; this.shake = 0; this.slowmo = 0;
+      this.pillars = []; this.braziers = []; this.props = []; this.shake = 0; this.slowmo = 0;
       if (arenaCfg.pillarRows) {
         for (const z of arenaCfg.pillarRows) for (const x of arenaCfg.pillarXs)
           this.pillars.push({ x, z, r: arenaCfg.pillarRadius, broken: Math.random() < 0.25, h: rand(2.2, 4.5) });
@@ -22,6 +22,14 @@ RB.define('world', function (require) {
         for (let i = 0; i < arenaCfg.braziers; i++) {
           const a = i / arenaCfg.braziers * TAU + TAU / 8;
           this.braziers.push({ x: Math.cos(a) * (arenaCfg.radius - 3), z: Math.sin(a) * (arenaCfg.radius - 3), r: arenaCfg.brazierRadius, alive: true });
+        }
+      }
+      if (arenaCfg.graves) {                 // scattered cemetery decor (no collision; pure backdrop)
+        const R = arenaCfg.radius;
+        for (let i = 0; i < arenaCfg.graves; i++) {
+          const a = rand(0, TAU), rr = rand(3.2, R - 1.0);
+          this.props.push({ prop: true, gkind: pick(['head', 'head', 'head', 'cross', 'cross', 'tomb', 'urn']),
+            x: Math.cos(a) * rr, z: Math.sin(a) * rr, rot: rand(-0.22, 0.22), s: rand(0.75, 1.35), tilt: rand(-0.12, 0.12) });
         }
       }
     },

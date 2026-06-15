@@ -80,13 +80,15 @@ RB.define('render', function (require) {
       const ents = this._ents; ents.length = 0;
       for (const p of World.pillars) ents.push(p);
       for (const b of World.braziers) if (b.alive) ents.push(b);
-      for (const b of Game.bosses) if (!(b.dead && b.kind === 'echo')) ents.push(b);
+      for (const p of World.props) ents.push(p);
+      for (const b of Game.bosses) if (!(b.dead && (b.kind === 'echo' || b.kind === 'risen'))) ents.push(b);
       ents.push(Player);
       if (Weapon.out()) ents.push(Weapon);
       ents.sort((a, b) => a.z - b.z);
       for (const e of ents) {
         if (e === Player) this.drawPlayer();
         else if (e === Weapon) this.drawWeapon();
+        else if (e.prop) this.drawGrave(e);
         else if (e.kind) this.drawBoss(e);
         else if (e.r !== undefined && e.broken !== undefined) this.drawPillar(e);
         else this.drawBrazier(e);
@@ -109,9 +111,11 @@ RB.define('render', function (require) {
     drawArena() {
       const c = this.ctx, a = world().arena; if (!a) return;
       const isForge = game().arenaTheme === 'forge';
+      const isOssuary = game().arenaTheme === 'ossuary';
       const bg = c.createLinearGradient(0, 0, 0, this.H);
       if (isForge) { bg.addColorStop(0, '#120c0e'); bg.addColorStop(1, '#1d1410'); }
       else if (game().arenaTheme === 'chapel') { bg.addColorStop(0, '#0d0d14'); bg.addColorStop(1, '#15141d'); }
+      else if (isOssuary) { bg.addColorStop(0, '#0a0f0c'); bg.addColorStop(1, '#0e1512'); }
       else { bg.addColorStop(0, '#0c0e12'); bg.addColorStop(1, '#13161c'); }
       c.fillStyle = bg; c.fillRect(0, 0, this.W, this.H);
       c.save();
@@ -119,9 +123,10 @@ RB.define('render', function (require) {
         c.translate(this.sx(0), this.sy(0)); c.scale(1, 0.62);
         const g = c.createRadialGradient(0, 0, a.radius * this.S * 0.2, 0, 0, a.radius * this.S);
         if (isForge) { g.addColorStop(0, '#2a211c'); g.addColorStop(1, '#1a120e'); }
+        else if (isOssuary) { g.addColorStop(0, '#1c2620'); g.addColorStop(1, '#0c120e'); }
         else { g.addColorStop(0, '#23242c'); g.addColorStop(1, '#15161c'); }
         c.beginPath(); c.arc(0, 0, a.radius * this.S, 0, TAU); c.fillStyle = g; c.fill();
-        c.strokeStyle = isForge ? 'rgba(255,122,47,.35)' : 'rgba(70,224,200,.25)'; c.lineWidth = 3; c.stroke();
+        c.strokeStyle = isForge ? 'rgba(255,122,47,.35)' : isOssuary ? 'rgba(143,217,160,.22)' : 'rgba(70,224,200,.25)'; c.lineWidth = 3; c.stroke();
         c.strokeStyle = 'rgba(255,255,255,.04)';
         for (let r = 4; r < a.radius; r += 4) { c.beginPath(); c.arc(0, 0, r * this.S, 0, TAU); c.lineWidth = 1; c.stroke(); }
       } else {
@@ -234,6 +239,8 @@ RB.define('render', function (require) {
       else if (b.kind === 'choir') this.drawChoir(b, 1);
       else if (b.kind === 'echo') this.drawChoir(b, 0.45);
       else if (b.kind === 'dummy') this.drawDummy(b);
+      else if (b.kind === 'shepherd') this.drawShepherd(b);
+      else if (b.kind === 'risen') this.drawRisen(b);
     },
     drawWarden(b) {
       const c = this.ctx; this.shadow(b.x, b.z, b.radius * 0.95);
@@ -338,6 +345,117 @@ RB.define('render', function (require) {
       c.beginPath(); c.arc(0, -H * 0.92, 4.5, 0, TAU); c.stroke();
       c.restore();
     },
+    drawShepherd(b) {
+      const c = this.ctx; this.shadow(b.x, b.z, b.radius);
+      const x = this.sx(b.x), y = this.sy(b.z);
+      const H = b.height * this.S * 0.92;
+      const sway = Math.sin(b.animT * 1.4) * 2;
+      const dir = Math.cos(b.facing) >= 0 ? 1 : -1;
+      const stepping = (b.state === 'windup' && (b.attack === 'N3' || b.attack === 'N5'));
+      c.save(); c.translate(x, y);
+      // dissolving into ash-moths while Grave-Stepping
+      if (stepping) {
+        const p = clamp(b.stateT / (b.cfg.attacks[b.attack].windup || 0.5), 0, 1);
+        c.globalAlpha = 1 - p * 0.6;
+        for (let i = 0; i < 10; i++) { const a = rand(0, TAU), rr = p * 26 * Math.random();
+          c.fillStyle = 'rgba(143,217,160,' + (0.5 * (1 - p)) + ')';
+          c.fillRect(Math.cos(a) * rr - 1, -H * 0.5 + Math.sin(a) * rr - 1, 2, 2); }
+      }
+      // grave-cloth robe (tall stooped silhouette)
+      const body = b.flash > 0 ? '#ffffff' : '#3a3b3f';
+      c.fillStyle = body;
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.quadraticCurveTo(-15, -H * 0.5, -8 + sway, -H * 0.92);
+      c.quadraticCurveTo(0, -H * 1.02, 8 + sway, -H * 0.92);
+      c.quadraticCurveTo(15, -H * 0.5, 0, 0);
+      c.fill();
+      // ragged hem
+      c.strokeStyle = b.flash > 0 ? '#fff' : '#26272b'; c.lineWidth = 2;
+      c.beginPath(); for (let i = -12; i <= 12; i += 4) { c.moveTo(i, -2); c.lineTo(i + 2, 6); } c.stroke();
+      // cowl + single pale grave-light
+      c.fillStyle = b.flash > 0 ? '#fff' : '#202125';
+      c.beginPath(); c.arc(sway, -H * 0.9, 9, 0, TAU); c.fill();
+      const gl = 4 + Math.sin(b.animT * 4) * 1.2;
+      const g = c.createRadialGradient(sway, -H * 0.9, 0, sway, -H * 0.9, 7 + gl);
+      g.addColorStop(0, '#d6ffe0'); g.addColorStop(.4, '#8fd9a0'); g.addColorStop(1, 'rgba(143,217,160,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(sway + 2 * dir, -H * 0.9, 7 + gl, 0, TAU); c.fill();
+      // censer-staff with funerary smoke
+      c.save(); c.translate(14 * dir, -H * 0.55); c.rotate(dir * 0.12);
+      c.strokeStyle = '#5a5e5a'; c.lineWidth = 3; c.beginPath(); c.moveTo(0, H * 0.5); c.lineTo(0, -H * 0.42); c.stroke();
+      c.fillStyle = '#6a6e66'; c.beginPath(); c.arc(0, -H * 0.42, 5, 0, TAU); c.fill();
+      for (let i = 0; i < 3; i++) { c.fillStyle = 'rgba(143,217,160,' + (0.18 - i * 0.05) + ')';
+        c.beginPath(); c.arc(Math.sin(b.animT * 2 + i) * 5, -H * 0.42 - 8 - i * 9, 4 + i * 2, 0, TAU); c.fill(); }
+      c.restore();
+      if (b.coreExposed) {     // channel: exposed core for the 2x interrupt
+        const pul = 5 + Math.sin(b.animT * 8) * 2;
+        const g2 = c.createRadialGradient(sway, -H * 0.55, 2, sway, -H * 0.55, 14 + pul);
+        g2.addColorStop(0, '#eafff0'); g2.addColorStop(.4, '#8fd9a0'); g2.addColorStop(1, 'rgba(143,217,160,0)');
+        c.fillStyle = g2; c.beginPath(); c.arc(sway, -H * 0.55, 14 + pul, 0, TAU); c.fill();
+      }
+      c.restore();
+    },
+    drawRisen(b) {
+      const c = this.ctx; this.shadow(b.x, b.z, b.radius * 0.9);
+      const x = this.sx(b.x), y = this.sy(b.z), H = b.height * this.S * 0.92;
+      const sway = Math.sin(b.animT * 4 + b.x) * 2;
+      const lunge = (b.state === 'windup' || b.state === 'strike') ? 4 : 0;
+      c.save(); c.translate(x, y);
+      const tone = b.flash > 0 ? '#ffffff' : b.bloated ? '#7fae84' : '#9aa890';
+      // hunched torso
+      c.fillStyle = tone;
+      c.beginPath();
+      c.moveTo(0, 0);
+      c.quadraticCurveTo(-8 - (b.bloated ? 3 : 0), -H * 0.45, -3 + sway + lunge, -H * 0.7);
+      c.quadraticCurveTo(0, -H * 0.78, 3 + sway + lunge, -H * 0.7);
+      c.quadraticCurveTo(8 + (b.bloated ? 3 : 0), -H * 0.45, 0, 0);
+      c.fill();
+      // grasping arms
+      c.strokeStyle = tone; c.lineWidth = 3; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(0, -H * 0.5); c.lineTo(10 + lunge, -H * 0.5 - 2); c.moveTo(0, -H * 0.5); c.lineTo(-9 + lunge, -H * 0.46); c.stroke();
+      // skull
+      c.fillStyle = b.flash > 0 ? '#fff' : '#cdd3c4';
+      c.beginPath(); c.arc(sway + lunge * 0.6, -H * 0.74, b.bloated ? 6 : 5, 0, TAU); c.fill();
+      c.fillStyle = '#1a1f18';
+      c.beginPath(); c.arc(sway + lunge * 0.6 - 1.5, -H * 0.75, 1.1, 0, TAU); c.arc(sway + lunge * 0.6 + 1.5, -H * 0.75, 1.1, 0, TAU); c.fill();
+      if (b.bloated) {   // sickly pulsing glow warning of the burst-on-death
+        const pul = 3 + Math.sin(b.animT * 6) * 1.5;
+        const g = c.createRadialGradient(sway, -H * 0.4, 1, sway, -H * 0.4, 8 + pul);
+        g.addColorStop(0, 'rgba(143,217,160,.5)'); g.addColorStop(1, 'rgba(143,217,160,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(sway, -H * 0.4, 8 + pul, 0, TAU); c.fill();
+      }
+      c.restore();
+    },
+    drawGrave(e) {
+      const c = this.ctx; this.shadow(e.x, e.z, 0.42 * e.s);
+      const h = this.S * e.s, stone = '#3a3e39', stoneL = '#4c514a', moss = 'rgba(96,140,96,.22)';
+      c.save(); c.translate(this.sx(e.x), this.sy(e.z)); c.rotate(e.tilt);
+      if (e.gkind === 'head') {
+        const w = h * 0.52, ht = h * 1.05;
+        c.fillStyle = stone; c.beginPath();
+        c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -ht * 0.62); c.arc(0, -ht * 0.62, w / 2, Math.PI, 0); c.lineTo(w / 2, 0); c.closePath(); c.fill();
+        c.fillStyle = stoneL; c.fillRect(-w / 2, -ht * 0.62, w * 0.16, ht * 0.62);
+        c.fillStyle = moss; c.fillRect(-w / 2, -ht * 0.12, w, ht * 0.12);
+        c.strokeStyle = 'rgba(18,22,18,.55)'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(0, -ht * 0.58); c.lineTo(0, -ht * 0.32); c.moveTo(-w * 0.16, -ht * 0.45); c.lineTo(w * 0.16, -ht * 0.45); c.stroke();
+      } else if (e.gkind === 'cross') {
+        const w = h * 0.5, ht = h * 1.2, t = Math.max(2, h * 0.12);
+        c.fillStyle = stone; c.fillRect(-t / 2, -ht, t, ht); c.fillRect(-w / 2, -ht * 0.72, w, t);
+        c.fillStyle = moss; c.fillRect(-t / 2, -ht * 0.16, t, ht * 0.16);
+      } else if (e.gkind === 'tomb') {
+        const w = h * 0.95, ht = h * 0.52;
+        c.fillStyle = '#33372f'; c.beginPath();
+        c.moveTo(-w / 2, 0); c.lineTo(-w / 2, -ht * 0.58); c.lineTo(0, -ht); c.lineTo(w / 2, -ht * 0.58); c.lineTo(w / 2, 0); c.closePath(); c.fill();
+        c.fillStyle = stoneL; c.beginPath(); c.moveTo(-w / 2, -ht * 0.58); c.lineTo(0, -ht); c.lineTo(w * 0.02, -ht * 0.95); c.lineTo(-w * 0.44, -ht * 0.56); c.closePath(); c.fill();
+        c.fillStyle = moss; c.fillRect(-w / 2, -ht * 0.16, w, ht * 0.16);
+      } else {  // urn / broken column
+        const w = h * 0.4, ht = h * 0.66;
+        c.fillStyle = '#2c302a'; c.fillRect(-w * 0.62, -h * 0.12, w * 1.24, h * 0.12);
+        c.fillStyle = stone; c.fillRect(-w / 2, -ht, w, ht);
+        c.fillStyle = stoneL; c.beginPath(); c.arc(0, -ht, w * 0.58, Math.PI, 0); c.fill();
+      }
+      c.restore();
+    },
     drawHazardsGround() {
       const cb = game().settings.cbSafe;
       for (const h of world().hazards) {
@@ -357,6 +475,50 @@ RB.define('render', function (require) {
         } else if (h.type === 'shockring') {
           const t = h.t / h.life;
           this.groundRing(h.x, h.z, h.r * (0.5 + t * 0.6), 0.25, `rgba(255,255,255,${(1 - t) * .7})`);
+        } else if (h.type === 'rot') {
+          // safe-rim ring (the slab edge stays clean) + the dangerous necrotic field
+          this.groundDisc(h.x, h.z, h.r, null, 'rgba(143,217,160,.35)', 1.5);
+          const cur = h.cur || 0;
+          const fade = h.t > h.life - 1 ? Math.max(0, h.life - h.t) : 1;
+          this.groundDisc(h.x, h.z, cur, `rgba(74,120,70,${0.42 * fade})`, 'rgba(120,180,120,.7)', 2, cb);
+          const c = this.ctx; c.save(); c.translate(this.sx(h.x), this.sy(h.z)); c.scale(1, .62);
+          c.strokeStyle = `rgba(40,60,40,${0.5 * fade})`; c.lineWidth = 2;
+          for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + game().simTime * 0.6;
+            c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(a) * cur * this.S, Math.sin(a) * cur * this.S); c.stroke(); }
+          c.restore();
+        } else if (h.type === 'bloom') {
+          if (!h.done) {
+            const p = clamp(h.t / h.telegraph, 0, 1);
+            this.groundDisc(h.x, h.z, h.r, `rgba(143,217,160,${0.12 + 0.18 * p})`, 'rgba(143,217,160,.9)', 2, cb);
+          } else {
+            const a = clamp(1 - (h.t - h.telegraph) / 0.4, 0, 1);
+            this.groundDisc(h.x, h.z, h.r, `rgba(120,200,130,${a * 0.5})`, null, 0);
+          }
+        } else if (h.type === 'raise') {
+          if (!h.done) {
+            const p = clamp(h.t / h.telegraph, 0, 1);
+            this.groundDisc(h.x, h.z, h.r, `rgba(143,217,160,${0.14 + 0.22 * p})`, 'rgba(143,217,160,.9)', 2, cb);
+          } else {
+            const a = clamp(1 - (h.t - h.telegraph) / 0.3, 0, 1);
+            this.groundDisc(h.x, h.z, h.r, `rgba(143,217,160,${a * 0.5})`, null, 0);
+          }
+        } else if (h.type === 'rotline') {
+          const dx = Math.cos(h.ang), dz = Math.sin(h.ang), L = h.length;
+          const armed = h.t >= (h.arm || 0);
+          const fade = h.t > h.life + (h.arm || 0) - 1 ? Math.max(0, h.life + (h.arm || 0) - h.t) : 1;
+          const c = this.ctx; c.save(); c.translate(this.sx(0), this.sy(0)); c.scale(1, 0.62); c.lineCap = 'round';
+          const x1 = h.x * this.S, z1 = h.z * this.S, x2 = (h.x + dx * L) * this.S, z2 = (h.z + dz * L) * this.S;
+          if (!armed) {                                  // locked but not yet live: bright "move!" warning
+            const p = clamp(h.t / (h.arm || 0.0001), 0, 1);
+            c.strokeStyle = `rgba(143,217,160,${0.25 + 0.5 * p})`; c.lineWidth = h.band * this.S;
+            c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
+          } else {
+            c.strokeStyle = `rgba(74,120,70,${0.5 * fade})`; c.lineWidth = h.band * this.S;
+            c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
+            c.strokeStyle = `rgba(143,217,160,${0.65 * fade})`; c.lineWidth = 2 + Math.sin(game().simTime * 7) * 0.6;
+            c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
+          }
+          c.restore();
         }
       }
     },
@@ -415,7 +577,35 @@ RB.define('render', function (require) {
           } else if (a === 'W4') {
             this.groundArc(b.x, b.z, 3, angTo(b.x, b.z, Player.x, Player.z), 0.5, null, 'rgba(255,196,107,.7)');
           }
-        } else {
+        } else if (b.kind === 'shepherd') {
+          if (a === 'N1') {
+            this.groundArc(b.x, b.z, 3, angTo(b.x, b.z, Player.x, Player.z), 0.3, null, 'rgba(143,217,160,.75)');
+          } else if (a === 'N4') {
+            this.groundDisc(Player.x, Player.z, A.N4.radius, `rgba(74,120,70,${0.12 + 0.24 * prog(A.N4)})`, 'rgba(143,217,160,.85)', 2, cb);
+          } else if (a === 'N5') {
+            this.groundDisc(Player.x, Player.z, A.N5.range, `rgba(143,217,160,${pulse * prog(A.N5)})`, 'rgba(143,217,160,.85)', 2, cb);
+          } else if (a === 'N7') {
+            const a2 = world().arena;
+            this.groundDisc(0, 0, a2.radius, `rgba(150,50,50,${0.08 + 0.14 * prog(A.N7)})`, null, 0, cb);   // arena-wide danger
+            if (b.sanctified) this.groundDisc(b.sanctified.x, b.sanctified.z, b.sanctified.r, 'rgba(143,217,160,.20)', '#8fd9a0', 3, true); // safe spot
+          } else if (a === 'N2' || a === 'N6') {
+            const sr = CONFIG.shepherd.risen.spawnRadius;
+            this.groundDisc(Player.x, Player.z, sr, `rgba(143,217,160,${0.15 + 0.2 * Math.sin(game().simTime * 8)})`, 'rgba(143,217,160,.7)', 1.5, cb);
+          } else if (a === 'N8') {
+            const c = A.N8, ang = angTo(b.x, b.z, Player.x, Player.z);   // originates at the boss, sweeps to follow the player
+            const cc = this.ctx; cc.save(); cc.translate(this.sx(0), this.sy(0)); cc.scale(1, 0.62);
+            cc.lineCap = 'round'; cc.strokeStyle = `rgba(143,217,160,${0.25 + 0.45 * prog(c)})`; cc.lineWidth = c.band * this.S;
+            cc.beginPath();
+            cc.moveTo(b.x * this.S, b.z * this.S);
+            cc.lineTo((b.x + Math.cos(ang) * c.length) * this.S, (b.z + Math.sin(ang) * c.length) * this.S);
+            cc.stroke(); cc.restore();
+          }
+        } else if (b.kind === 'risen') {
+          if (a === 'melee') {                          // the hit indicator the minions were missing
+            const c = CONFIG.shepherd.risen.melee;
+            this.groundArc(b.x, b.z, c.range, b.facing, c.arc, `rgba(143,217,160,${pulse * prog(c)})`, 'rgba(143,217,160,.85)', cb);
+          }
+        } else if (b.kind === 'choir' || b.kind === 'echo') {
           if (a === 'C1' || a === 'C5') {
             const c = A[a];
             this.groundArc(b.x, b.z, c.range, b.facing, c.arc, `rgba(207,213,239,${pulse * prog(c)})`, 'rgba(207,213,239,.85)', cb);
@@ -451,6 +641,12 @@ RB.define('render', function (require) {
           const g = c.createRadialGradient(x, y, 1, x, y, 9);
           g.addColorStop(0, '#ffc46b'); g.addColorStop(.6, '#ff7a2f'); g.addColorStop(1, 'rgba(255,122,47,0)');
           c.fillStyle = g; c.beginPath(); c.arc(x, y, 9, 0, TAU); c.fill();
+        } else if (p.type === 'lance') {
+          c.save(); c.translate(x, y); c.rotate(p.ang);
+          c.shadowColor = '#8fd9a0'; c.shadowBlur = 9;
+          c.strokeStyle = '#cfe8d0'; c.lineWidth = 3; c.beginPath(); c.moveTo(-12, 0); c.lineTo(10, 0); c.stroke();
+          c.fillStyle = '#eafff0'; c.beginPath(); c.moveTo(16, 0); c.lineTo(8, -3); c.lineTo(8, 3); c.closePath(); c.fill();
+          c.shadowBlur = 0; c.restore();
         } else {
           c.save(); c.translate(x, y); c.rotate(p.ang);
           c.fillStyle = '#cfd5ef'; c.shadowColor = '#cfd5ef'; c.shadowBlur = 8;
@@ -528,7 +724,7 @@ RB.define('render', function (require) {
       c.fillText(ws, dx + 26, iy + 4);
       let bbY = this.H - 64;
       for (const b of Game.bosses) {
-        if (b.kind === 'echo' || b.dead) continue;
+        if (b.kind === 'echo' || b.kind === 'risen' || b.dead) continue;
         const w2 = Math.min(620, this.W * 0.55), x2 = this.W / 2 - w2 / 2;
         c.font = '15px Georgia'; c.textAlign = 'center'; c.fillStyle = '#e8e2d6';
         c.shadowColor = '#000'; c.shadowBlur = 5;
@@ -541,15 +737,20 @@ RB.define('render', function (require) {
         if (b.cfg.phase2At > 0) { c.fillStyle = '#e8e2d6'; c.fillRect(x2 + w2 * b.cfg.phase2At - 1, bbY, 2, 11); }
         bbY -= 40; c.textAlign = 'left';
       }
-      for (const b of Game.bosses) if (b.kind === 'echo' && !b.dead) {
+      for (const b of Game.bosses) if ((b.kind === 'echo' || b.kind === 'risen') && !b.dead) {
         const x = this.sx(b.x), y = this.sy(b.z, b.height + 0.3);
         c.fillStyle = 'rgba(8,7,11,.7)'; c.fillRect(x - 22, y, 44, 5);
-        c.fillStyle = '#cfd5ef'; c.fillRect(x - 22, y, 44 * (b.hp / b.maxHp), 5);
+        c.fillStyle = b.kind === 'risen' ? '#8fd9a0' : '#cfd5ef'; c.fillRect(x - 22, y, 44 * (b.hp / b.maxHp), 5);
       }
       const choir = Game.bosses.find(b => b.kind === 'choir');
       if (choir && !choir.dead && choir.fightT > CONFIG.choir.enrageTime) {
         c.fillStyle = '#ff5a5a'; c.font = 'bold 13px Georgia'; c.textAlign = 'center';
         c.fillText('THE HYMN QUICKENS', this.W / 2, this.H - 104); c.textAlign = 'left';
+      }
+      const shep = Game.bosses.find(b => b.kind === 'shepherd');
+      if (shep && !shep.dead && shep.fightT > CONFIG.shepherd.enrageTime) {
+        c.fillStyle = '#8fd9a0'; c.font = 'bold 13px Georgia'; c.textAlign = 'center';
+        c.fillText('THE DEAD MARCH FASTER', this.W / 2, this.H - 104); c.textAlign = 'left';
       }
       if (Game.inFight()) {
         c.fillStyle = '#7d7390'; c.font = '13px Georgia'; c.textAlign = 'right';

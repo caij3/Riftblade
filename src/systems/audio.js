@@ -80,6 +80,13 @@ RB.define('audio', function () {
           o.connect(g); g.connect(this.sfxBus); o.start(t + i * 0.12); o.stop(t + i * 0.12 + 1.7);
         }); break;
         case 'ui': tone('sine', 700, 900, 0.08, 0.2); break;
+        case 'lance': tone('triangle', 1300, 420, 0.16, 0.4); hiss(0.12, 0.4, 2600, 700, 2); break;
+        case 'risendie': tone('sawtooth', 420, 70, 0.32, 0.55, 0.01); hiss(0.16, 0.4, 1100, 280, 1); break;
+        case 'raise': tone('sine', 120, 360, 0.5, 0.4, 0.06); hiss(0.4, 0.3, 300, 1500, 1); break;
+        case 'gravestep': hiss(0.3, 0.45, 2000, 380, 3); tone('sine', 600, 200, 0.2, 0.3); break;
+        case 'rot': tone('sawtooth', 80, 45, 0.5, 0.4, 0.05); hiss(0.5, 0.32, 520, 180, 0.6); break;
+        case 'censer': hiss(0.26, 0.6, 1400, 340, 1.5); tone('triangle', 320, 120, 0.2, 0.4); break;
+        case 'lastrite': tone('sawtooth', 50, 150, 1.2, 0.7, 0.2); hiss(1.0, 0.4, 250, 1800, 1); break;
       }
     },
     stopMusic() { this.musicNodes.forEach(n => { try { n.stop ? n.stop() : n.disconnect(); } catch (e) {} }); this.musicNodes = []; },
@@ -103,6 +110,9 @@ RB.define('audio', function () {
         const lfo = c.createOscillator(); lfo.frequency.value = 0.21; const lg = c.createGain(); lg.gain.value = 380;
         lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); this.musicNodes.push(lfo, lg); }
       else if (theme === 'tutorial') { mk('sine', 65.4, 0.1); drone(130.8, 0.05); drone(196, 0.035); }
+      else if (theme === 'shepherd') { mk('sine', 43.7, 0.12); drone(87.3, 0.06); drone(116.5, 0.05); drone(87.9, 0.05); drone(131, 0.035);
+        const lfo = c.createOscillator(); lfo.frequency.value = 0.09; const lg = c.createGain(); lg.gain.value = 200;
+        lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); this.musicNodes.push(lfo, lg); }
     }
   };
   return Audio2;
