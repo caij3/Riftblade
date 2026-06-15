@@ -47,7 +47,8 @@ RB.define('config', function () {
         W6: { windup: 0.7, damage: 35, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.55, recovery: 2.0, trackSpeed: 7.5 },
         W7: { windup: 1.2, damage: 65, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0 }
       },
-      coreRiftstrikeMult: 2.0,
+      coreRiftstrikeMult: 1.5,
+      riftstrikeNoStagger: true, 
       arena: { type: 'circle', radius: 15, braziers: 4, brazierRadius: 0.8 }
     },
     choir: {
@@ -77,7 +78,7 @@ RB.define('config', function () {
       idle: [1.0, 1.5],
       transitionTime: 1.0,
       enrageTime: 420, enrageLanceMult: 1.5,
-      coreRiftstrikeMult: 2.0,        // N7-interrupt Riftstrike (coreExposed) deals 2x
+      coreRiftstrikeMult: 1.5,        // N7-interrupt Riftstrike (coreExposed) deals 2x
       riftstrikeNoStagger: true,      // Boss-3 exception: pinned, not staggered (R-NEC-06)
       behavior: { approachDist: 6.0, graveStepRange: 3.5, n7Interval: 12.0 },
       risen: {
@@ -87,7 +88,7 @@ RB.define('config', function () {
         melee: { windup: 0.5, hits: 1, damage: 12, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6 }
       },
       attacks: {
-        N1: { windup: 0.7, damage: 14, speed: 20.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
+        N1: { windup: 0.7, damage: 14, speed: 24.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
         N2: { windup: 0.9, recovery: 0.8 },
         N3: { windup: 0.5, recovery: 0.5 },
         N4: { windup: 1.5, radius: 4.0, campTime: 2.0, expandTime: 2.0, life: 6.0, dps: 6, dpsP2: 8, recovery: 1.0 },
