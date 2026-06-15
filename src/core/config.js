@@ -87,7 +87,7 @@ RB.define('config', function () {
         melee: { windup: 0.5, hits: 1, damage: 12, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6 }
       },
       attacks: {
-        N1: { windup: 0.7, damage: 24, speed: 14.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
+        N1: { windup: 0.7, damage: 14, speed: 20.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
         N2: { windup: 0.9, recovery: 0.8 },
         N3: { windup: 0.5, recovery: 0.5 },
         N4: { windup: 1.5, radius: 4.0, campTime: 2.0, expandTime: 2.0, life: 6.0, dps: 6, dpsP2: 8, recovery: 1.0 },
