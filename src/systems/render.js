@@ -351,7 +351,7 @@ RB.define('render', function (require) {
       const H = b.height * this.S * 0.92;
       const sway = Math.sin(b.animT * 1.4) * 2;
       const dir = Math.cos(b.facing) >= 0 ? 1 : -1;
-      const stepping = (b.state === 'windup' && (b.attack === 'N3' || b.attack === 'N5'));
+      const stepping = (b.state === 'windup' && b.attack === 'N3');
       c.save(); c.translate(x, y);
       // dissolving into ash-moths while Grave-Stepping
       if (stepping) {
@@ -476,10 +476,17 @@ RB.define('render', function (require) {
           const t = h.t / h.life;
           this.groundRing(h.x, h.z, h.r * (0.5 + t * 0.6), 0.25, `rgba(255,255,255,${(1 - t) * .7})`);
         } else if (h.type === 'rot') {
-          // safe-rim ring (the slab edge stays clean) + the dangerous necrotic field
+          const d = h.delay || 0;
+          if (!h.armed) {                              // locked, not yet live: pulsing "rot forming here" ring
+            const p = clamp(h.t / (d || 0.0001), 0, 1);
+            this.groundDisc(h.x, h.z, h.r, `rgba(143,217,160,${0.10 + 0.16 * p})`, 'rgba(143,217,160,.85)', 2, cb);
+            break;
+          }
+          // footprint outline + the dangerous necrotic field
           this.groundDisc(h.x, h.z, h.r, null, 'rgba(143,217,160,.35)', 1.5);
           const cur = h.cur || 0;
-          const fade = h.t > h.life - 1 ? Math.max(0, h.life - h.t) : 1;
+          const end = d + h.life;
+          const fade = h.t > end - 1 ? Math.max(0, end - h.t) : 1;
           this.groundDisc(h.x, h.z, cur, `rgba(74,120,70,${0.42 * fade})`, 'rgba(120,180,120,.7)', 2, cb);
           const c = this.ctx; c.save(); c.translate(this.sx(h.x), this.sy(h.z)); c.scale(1, .62);
           c.strokeStyle = `rgba(40,60,40,${0.5 * fade})`; c.lineWidth = 2;
@@ -512,10 +519,8 @@ RB.define('render', function (require) {
             const p = clamp(h.t / (h.arm || 0.0001), 0, 1);
             c.strokeStyle = `rgba(143,217,160,${0.25 + 0.5 * p})`; c.lineWidth = h.band * this.S;
             c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
-          } else {
-            c.strokeStyle = `rgba(74,120,70,${0.5 * fade})`; c.lineWidth = h.band * this.S;
-            c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
-            c.strokeStyle = `rgba(143,217,160,${0.65 * fade})`; c.lineWidth = 2 + Math.sin(game().simTime * 7) * 0.6;
+          } else {                                       // active: bold necrotic band (swapped from the old aim render)
+            c.strokeStyle = `rgba(143,217,160,${0.7 * fade})`; c.lineWidth = h.band * this.S;
             c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
           }
           c.restore();
@@ -583,7 +588,8 @@ RB.define('render', function (require) {
           } else if (a === 'N4') {
             this.groundDisc(Player.x, Player.z, A.N4.radius, `rgba(74,120,70,${0.12 + 0.24 * prog(A.N4)})`, 'rgba(143,217,160,.85)', 2, cb);
           } else if (a === 'N5') {
-            this.groundDisc(Player.x, Player.z, A.N5.range, `rgba(143,217,160,${pulse * prog(A.N5)})`, 'rgba(143,217,160,.85)', 2, cb);
+            const c = A.N5;
+            this.groundArc(b.x, b.z, c.range, b.facing, c.arc, `rgba(143,217,160,${pulse * prog(c)})`, 'rgba(143,217,160,.9)', cb);
           } else if (a === 'N7') {
             const a2 = world().arena;
             this.groundDisc(0, 0, a2.radius, `rgba(150,50,50,${0.08 + 0.14 * prog(A.N7)})`, null, 0, cb);   // arena-wide danger
@@ -593,12 +599,15 @@ RB.define('render', function (require) {
             this.groundDisc(Player.x, Player.z, sr, `rgba(143,217,160,${0.15 + 0.2 * Math.sin(game().simTime * 8)})`, 'rgba(143,217,160,.7)', 1.5, cb);
           } else if (a === 'N8') {
             const c = A.N8, ang = angTo(b.x, b.z, Player.x, Player.z);   // originates at the boss, sweeps to follow the player
-            const cc = this.ctx; cc.save(); cc.translate(this.sx(0), this.sy(0)); cc.scale(1, 0.62);
-            cc.lineCap = 'round'; cc.strokeStyle = `rgba(143,217,160,${0.25 + 0.45 * prog(c)})`; cc.lineWidth = c.band * this.S;
-            cc.beginPath();
-            cc.moveTo(b.x * this.S, b.z * this.S);
-            cc.lineTo((b.x + Math.cos(ang) * c.length) * this.S, (b.z + Math.sin(ang) * c.length) * this.S);
-            cc.stroke(); cc.restore();
+            const cc = this.ctx; cc.save(); cc.translate(this.sx(0), this.sy(0)); cc.scale(1, 0.62); cc.lineCap = 'round';
+            const p = prog(c);
+            const x1 = b.x * this.S, z1 = b.z * this.S;
+            const x2 = (b.x + Math.cos(ang) * c.length) * this.S, z2 = (b.z + Math.sin(ang) * c.length) * this.S;
+            cc.strokeStyle = `rgba(74,120,70,${0.4 * p})`; cc.lineWidth = c.band * this.S;   // banded footprint (swapped from the old active render)
+            cc.beginPath(); cc.moveTo(x1, z1); cc.lineTo(x2, z2); cc.stroke();
+            cc.strokeStyle = `rgba(143,217,160,${0.4 + 0.5 * p})`; cc.lineWidth = 2 + Math.sin(game().simTime * 7) * 0.6;  // bright centre sightline
+            cc.beginPath(); cc.moveTo(x1, z1); cc.lineTo(x2, z2); cc.stroke();
+            cc.restore();
           }
         } else if (b.kind === 'risen') {
           if (a === 'melee') {                          // the hit indicator the minions were missing

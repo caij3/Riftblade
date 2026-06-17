@@ -3,8 +3,9 @@
    extend boss). The Shepherd rots the ground, raises the dead, and Grave-Steps
    between platforms; the Risen are the player's stamina source (kill = +stamina,
    the deliberate §3.5 carve-out via cfg.killStamina). No fall death — rot is the
-   pressure. Riftstrike does not stagger him (gated in player.js by
-   cfg.riftstrikeNoStagger); the N7 channel sets coreExposed for the 2x interrupt. */
+   pressure. Riftstrike does not stagger him (gated in Boss.stagger by
+   cfg.riftstrikeNoStagger); the N7 channel sets coreExposed, which grants the 2x
+   riftstrike bonus (cfg.coreRiftstrikeMult) but no longer interrupts the channel. */
 RB.define('shepherd', function (require) {
   const Boss = require('boss');
   const CONFIG = require('config');
@@ -95,31 +96,23 @@ RB.define('shepherd', function (require) {
       return game().bosses.filter(b => b.kind === 'risen' && !b.dead && dist(b.x, b.z, x, z) < r).length;
     }
     spawnRisenAt(x, z, bloated) {
-      if (this.risenCountNear(x, z) >= 1) return false;
+      const max = this.cfg.risen.maxAlive;
+      if (max != null && game().bosses.filter(b => b.kind === 'risen' && !b.dead).length >= max) return false;
+      if (this.risenCountNear(x, z, 1.6) >= 1) return false;
       const p = { x: x + rand(-1, 1), z: z + rand(-1, 1) }; world().clampPoint(p, 0.6);
       game().bosses.push(new Risen(p.x, p.z, this, bloated));
       return true;
     }
-    rotZone(x, z, r, dps) {                              // a free-form rot patch anywhere on the floor
+    rotZone(x, z, r, dps, life, delay) {                 // a free-form rot patch anywhere on the floor
       const N4 = this.cfg.attacks.N4;
       const p = { x, z }; world().clampPoint(p, 0);
-      world().hazards.push({ type: 'rot', x: p.x, z: p.z, r, rim: 0, t: 0, expandTime: N4.expandTime, life: N4.life, dps });
+      world().hazards.push({ type: 'rot', x: p.x, z: p.z, r, rim: 0, t: 0, expandTime: N4.expandTime, life, delay: delay || 0, dps });
     }
     graveStepTarget() {
       const A = this.cfg.arena.anchors;
       const pa = this.anchorAt(require('player').x, require('player').z), cur = this.anchorAt(this.x, this.z);
       const opts = A.filter(a => a !== pa && a !== cur);
       return opts.length ? pick(opts) : (pick(A.filter(a => a !== cur)) || A[0]);
-    }
-
-    takeDamage(amount, source) {
-      const interrupt = (source === 'riftstrike' && this.attack === 'N7' && this.state === 'windup');
-      super.takeDamage(amount, source);
-      if (interrupt && !this.dead) {
-        this.coreExposed = false; this.sanctified = null;
-        this.state = 'recover'; this.stateT = 0;
-        audio().sfx('stagger'); world().addShake(0.4);
-      }
     }
 
     choose() {
@@ -137,7 +130,8 @@ RB.define('shepherd', function (require) {
         if (d > 3) opts.push({ id: 'N1', ok: true });
       } else {
         if (this.sinceN7 > B.n7Interval) opts.push({ id: 'N7', ok: true });
-        if (d < B.graveStepRange && !lastWasStep) opts.push({ id: 'N5', ok: true }, { id: 'N3', ok: true });
+        if (d < B.graveStepRange && !lastWasStep) opts.push({ id: 'N3', ok: true });
+        if (d > B.n5Range && !lastWasStep) opts.push({ id: 'N5', ok: true });
         if (this.risenCountNear(P.x, P.z) === 0) opts.push({ id: 'N6', ok: true });
         if (this.campT > A.N4.campTime) opts.push({ id: 'N4', ok: true });
         if (d > 3) opts.push({ id: 'N8', ok: true }, { id: 'N8', ok: true });
@@ -177,6 +171,12 @@ RB.define('shepherd', function (require) {
               this.sanctified = { x: Math.cos(ang0) * aR * 0.5, z: Math.sin(ang0) * aR * 0.5, r: A.N7.safeRadius };
               this.x = 0; this.z = 0; world().spark(this.x, this.z, 1.4, '#8fd9a0', 14, 6);
             }
+            if (id === 'N5') {                       // grave-step next to the player, then telegraph the sweep (W2-style)
+              const ang = angTo(P.x, P.z, this.x, this.z);
+              this.x = P.x + Math.cos(ang) * 2.2; this.z = P.z + Math.sin(ang) * 2.2; world().clampPoint(this, this.radius);
+              this.facing = angTo(this.x, this.z, P.x, P.z);
+              world().spark(this.x, this.z, 1.4, '#8fd9a0', 14, 6); audio().sfx('gravestep');
+            }
             this.beginAttack(id);
           }
           break;
@@ -211,9 +211,11 @@ RB.define('shepherd', function (require) {
         }
         case 'N2': case 'N6': {
           const R = this.cfg.risen, bloated = this.attack === 'N6';
+          const atk = A[this.attack];
+          const spawnDelay = (atk && atk.spawnDelay != null) ? atk.spawnDelay : R.spawnDelay;
           // grave-light pools where the player was, holds briefly, then bursts (damage) and raises
           world().hazards.push({ type: 'raise', x: P.x, z: P.z, r: R.spawnRadius, t: 0,
-            telegraph: R.spawnDelay, dmg: R.spawnDamage, bloated, owner: this, done: false });
+            telegraph: spawnDelay, dmg: R.spawnDamage, bloated, owner: this, done: false });
           audio().sfx('raise');
           break;
         }
@@ -224,28 +226,23 @@ RB.define('shepherd', function (require) {
           break;
         }
         case 'N4': {
-          this.rotZone(P.x, P.z, A.N4.radius, this.phase === 1 ? A.N4.dps : A.N4.dpsP2);
+          this.rotZone(P.x, P.z, A.N4.radius, this.phase === 1 ? A.N4.dps : A.N4.dpsP2, A.N4.life, A.N4.delay);
           audio().sfx('rot');
           break;
         }
-        case 'N5': {
-          const c = A.N5, old = { x: this.x, z: this.z };
-          const a = angTo(P.x, P.z, this.x, this.z);
-          this.x = P.x + Math.cos(a) * 2.2; this.z = P.z + Math.sin(a) * 2.2; world().clampPoint(this, this.radius);
-          this.facing = angTo(this.x, this.z, P.x, P.z);
-          world().spark(this.x, this.z, 1.4, '#8fd9a0', 14, 6); audio().sfx('gravestep');
-          audio().sfx('censer'); world().addShake(0.3);
+        case 'N5': {                                     // W2-style 180° sweep (teleport already happened at attack start)
+          const c = A.N5;
+          audio().sfx('censer'); world().addShake(0.35);
           this.meleeArcHit(c.range, c.arc, c.damage);
-          world().hazards.push({ type: 'rot', x: old.x, z: old.z, r: 2.2, rim: 0.3, t: 0, expandTime: 0.5, life: 3.0, dps: A.N4.dpsP2 });
           break;
         }
         case 'N7': {
           const dps = A.N4.dpsP2, aR = this.cfg.arena.radius, S = this.sanctified;
           const clear = p => !S || dist(p.x, p.z, S.x, S.z) > S.r;
-          // scatter rot across the arena, keeping the sanctified spot clean
+          // scatter rot across the arena in an even, spread-out pattern, keeping the sanctified spot clean
           const centers = [{ x: 0, z: 0 }];
           for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; centers.push({ x: Math.cos(a) * aR * 0.62, z: Math.sin(a) * aR * 0.62 }); }
-          for (const c of centers) if (clear(c)) this.rotZone(c.x, c.z, A.N7.radius, dps);
+          for (const c of centers) if (clear(c)) this.rotZone(c.x, c.z, A.N7.radius, dps, A.N7.life, 0);
           // raise the dead across the floor (not in the safe zone)
           for (let i = 0; i < 4; i++) { const a = rand(0, TAU), rr = rand(aR * 0.3, aR * 0.85);
             const x = Math.cos(a) * rr, z = Math.sin(a) * rr; if (clear({ x, z })) this.spawnRisenAt(x, z, false); }

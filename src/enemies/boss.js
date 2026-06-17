@@ -43,6 +43,9 @@ RB.define('boss', function (require) {
     }
     stagger() {
       if (this.dead) return;
+      // immune if the whole boss is unstaggerable, or the current attack forbids being staggered out of
+      const atk = this.cfg.attacks && this.cfg.attacks[this.attack];
+      if (this.cfg.riftstrikeNoStagger || (atk && atk.stagger === false)) return;
       this.staggerCd = this.cfg.stagger.immunity || 8;
       this.staggered = true; this.staggerT = this.cfg.stagger.duration;
       this.state = 'stagger'; this.attack = null; this.recentDmg = [];

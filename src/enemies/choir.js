@@ -150,7 +150,7 @@ RB.define('choir', function (require) {
           break;
         }
       }
-      this.contactPush(dt);
+      if (this.state !== 'leap') this.contactPush(dt);   // no collision during the finisher tele
     }
     strikeUpdate(dt, A) {
       const Player = require('player');

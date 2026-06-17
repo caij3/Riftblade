@@ -107,17 +107,20 @@ RB.define('player', function (require) {
         const a0 = def.activeStart, a1 = def.activeEnd;
         if (!this.attackHitDone && this.attackT >= a0 && this.attackT <= a1) {
           const dmg = this.attackUnarmed ? def.damage : def.damages[this.attackIdx];
+          let hitAny = false;
           for (const b of bosses) {
             if (b.dead || b.untargetable) continue;
             const d = dist(this.x, this.z, b.x, b.z);
             if (d < def.range + b.radius && Math.abs(angDiff(this.facing, angTo(this.x, this.z, b.x, b.z))) < def.arc / 2) {
               b.takeDamage(dmg, 'melee');
-              this.gainStamina(C.melee.onHitStamina);
-              this.combatTimer = 0; this.attackHitDone = true;
-              audio().sfx(!this.attackUnarmed && this.attackIdx === 2 ? 'heavyhit' : 'hit');
-              world().addShake(this.attackIdx === 2 ? 0.25 : 0.12);
-              break;
+              hitAny = true;
             }
+          }
+          if (hitAny) {
+            this.gainStamina(C.melee.onHitStamina);
+            this.combatTimer = 0; this.attackHitDone = true;
+            audio().sfx(!this.attackUnarmed && this.attackIdx === 2 ? 'heavyhit' : 'hit');
+            world().addShake(this.attackIdx === 2 ? 0.25 : 0.12);
           }
           if (!this.attackHitDone && this.attackT >= a1 - dt) this.attackHitDone = true;
         }
@@ -186,7 +189,7 @@ RB.define('player', function (require) {
         let dmg = C.riftstrikeDamage;
         if (wasLodgedIn.coreExposed) dmg *= (wasLodgedIn.cfg.coreRiftstrikeMult || 1);
         wasLodgedIn.takeDamage(dmg, 'riftstrike');
-        if (!wasLodgedIn.cfg.riftstrikeNoStagger) wasLodgedIn.stagger();
+        wasLodgedIn.stagger();
         if (C.riftstrikeStamina > 0) this.gainStamina(C.riftstrikeStamina);
         this.combatTimer = 0;
         audio().sfx('riftstrike'); world().addShake(0.5);

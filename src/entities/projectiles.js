@@ -11,7 +11,7 @@ RB.define('projectiles', function (require) {
 
   function spawnCoal(x, z, ang, cfg, curve = 0) {
     world().projectiles.push({ type: 'coal', x, z, h: 1.4, ang, speed: cfg.projSpeed, curve,
-      r: cfg.projRadius, dmg: cfg.damage, splash: cfg.splash, life: 6 });
+      r: cfg.projRadius, dmg: cfg.damage, splash: cfg.splash, life: (cfg.life != null ? cfg.life : 6) });
     audio().sfx('coal');
   }
   function spawnShard(x, z, ang, dmg, speed, turnRate, life) {
@@ -105,14 +105,17 @@ RB.define('projectiles', function (require) {
           break;
         }
         case 'shockring': if (hz.t > hz.life) W.hazards.splice(i, 1); break;
-        case 'rot': {                               // Shepherd N4/N7: expanding DoT, safe rim at slab edge
-          const grow = clamp(hz.t / hz.expandTime, 0, 1);
-          hz.cur = Math.max(0, (hz.r - hz.rim) * grow);   // current dangerous radius (cached for render)
-          if (dist(hz.x, hz.z, Player.x, Player.z) < hz.cur + Player.radius) {
+        case 'rot': {                               // Shepherd N4/N7: locked delay, then expanding DoT
+          const d = hz.delay || 0;
+          const armed = hz.t >= d;
+          const grow = clamp((hz.t - d) / hz.expandTime, 0, 1);
+          hz.cur = Math.max(0, (hz.r - hz.rim) * grow);   // current dangerous radius (0 during the delay; cached for render)
+          hz.armed = armed;
+          if (armed && dist(hz.x, hz.z, Player.x, Player.z) < hz.cur + Player.radius) {
             hz.tick = (hz.tick || 0) - dt;
             if (hz.tick <= 0) { Player.takeDamage(hz.dps * 0.5, 'rot'); hz.tick = 0.5; } // hz.dps per second
           }
-          if (hz.t >= hz.life) W.hazards.splice(i, 1);     // slab reforms (R-NEC-07)
+          if (hz.t >= d + hz.life) W.hazards.splice(i, 1);
           break;
         }
         case 'bloom': {                              // Bloated Risen death: swell then necrotic burst
