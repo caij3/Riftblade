@@ -71,3 +71,30 @@
     letter-spacing:.22em;text-indent:.22em;font-size:18px;color:var(--bone);text-shadow:0 0 14px rgba(0,0,0,.9);
     opacity:0;transition:opacity .4s;pointer-events:none;text-transform:uppercase;text-align:center}
   .small{font-size:11px;color:#6d6478;margin-top:30px;letter-spacing:.1em;line-height:1.9;max-width:560px}
+
+  /* in-game menu (hamburger) — shown during gameplay, hidden when paused/in menus */
+  #btnMenu{position:absolute;top:14px;right:16px;z-index:8;display:none;flex-direction:column;justify-content:center;gap:5px;
+    width:44px;height:44px;padding:0 11px;background:rgba(12,10,16,.66);border:1px solid #2c2638;border-radius:6px;cursor:pointer;
+    -webkit-tap-highlight-color:transparent}
+  #btnMenu span{display:block;height:2px;width:100%;background:var(--bone);border-radius:2px;transition:background .18s}
+  #btnMenu:hover span,#btnMenu:active span{background:var(--rift)}
+  #objectives{top:62px}
+
+  /* mobile on-screen controls (opt-in via Settings). Container passes touches
+     through to the canvas except on the stick/buttons themselves. */
+  #mobileControls{position:absolute;inset:0;z-index:7;display:none;pointer-events:none;touch-action:none}
+  #mobileControls>*{pointer-events:auto;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #mjoy{position:absolute;left:max(28px,env(safe-area-inset-left,0px));bottom:max(34px,env(safe-area-inset-bottom,0px));
+    width:148px;height:148px;border-radius:50%;border:1px solid #3c3548;
+    background:radial-gradient(circle at 50% 50%,rgba(28,25,38,.55),rgba(12,10,16,.32))}
+  #mjoyKnob{position:absolute;left:50%;top:50%;width:62px;height:62px;border-radius:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle at 40% 35%,rgba(70,224,200,.55),rgba(26,110,114,.72));
+    border:1px solid var(--rift);box-shadow:0 0 16px rgba(70,224,200,.3)}
+  #mbtnAttack,#mbtnDash{position:absolute;border-radius:50%;color:var(--bone);background:rgba(20,17,27,.62);
+    font-family:var(--serif);letter-spacing:.12em;font-size:15px;text-transform:uppercase;cursor:pointer}
+  #mbtnAttack{right:max(34px,env(safe-area-inset-right,0px));bottom:max(42px,env(safe-area-inset-bottom,0px));
+    width:104px;height:104px;border:1px solid var(--ember)}
+  #mbtnDash{right:152px;bottom:58px;width:84px;height:84px;border:1px solid var(--rift)}
+  #mbtnAttack.pressed{background:rgba(255,122,47,.32);box-shadow:0 0 22px rgba(255,122,47,.4)}
+  #mbtnDash.pressed{background:rgba(70,224,200,.3);box-shadow:0 0 20px rgba(70,224,200,.35)}
+  #game{touch-action:none}

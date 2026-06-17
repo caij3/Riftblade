@@ -20,6 +20,7 @@ RB.define('input', function (require) {
     binds: { ...DEFAULT_BINDS },
     DEFAULT_BINDS, BIND_LABELS,
     keys: new Set(), mouse: { x: 640, y: 360, lmb: false, rmb: false },
+    touch: { ax: 0, az: 0 },        // virtual-joystick axis (set by the mobile module)
     pressed: new Set(),
     rmbDownAt: -1, rmbHeld: false, riftKeyDownAt: -1,
     gp: { ax: 0, az: 0, attack: false, rift: false, dodge: false, lock: false, pause: false,
@@ -60,7 +61,7 @@ RB.define('input', function (require) {
         }
       });
       canvas.addEventListener('contextmenu', e => e.preventDefault());
-      addEventListener('blur', () => { this.keys.clear(); this.mouse.lmb = this.mouse.rmb = false; });
+      addEventListener('blur', () => { this.keys.clear(); this.mouse.lmb = this.mouse.rmb = false; this.touch.ax = this.touch.az = 0; });
     },
     gpBlocked: false,
     pollGamepad() {

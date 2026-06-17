@@ -28,7 +28,7 @@ RB.define('game', function (require) {
 
   const Game = {
     mode: 'menu', bosses: [], paused: false, isRush: false,
-    settings: { shake: true, cbSafe: true, camSmooth: 55 },
+    settings: { shake: true, cbSafe: true, camSmooth: 55, mobile: false },
     simTime: 0, fightTime: 0, arenaTheme: 'forge',
     sequence: [], encounterIndex: 0, currentEncounter: null,
     runStats: { deaths: 0, hitsTaken: 0, clearTimes: {} },
@@ -168,6 +168,7 @@ RB.define('game', function (require) {
       while (this.acc >= step) { this.tick(step); this.acc -= step; }
       render().updateCamera(dtFrame);
       render().frame(dtFrame);
+      require('mobile').syncUI();
     }
   };
   return Game;

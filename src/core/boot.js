@@ -18,6 +18,7 @@ RB.define('boot', function (require) {
     Input.init(Render.cv);
     Audio2.init();
     UI.init();
+    require('mobile').init();
     UI.updateBossRushBtn();
     addEventListener('pointerdown', () => Audio2.resume(), { once: true });
     World.reset(CONFIG.tutorial.arena);

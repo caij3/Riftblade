@@ -37,10 +37,14 @@ RB.define('player', function (require) {
       this.stamina -= amount; return true;
     },
     gainStamina(amount) { this.stamina = clamp(this.stamina + amount, 0, CONFIG.player.maxStamina); },
-    aimAngle(bosses) {
+    aimAngle(bosses, melee) {
       if (this.lockOn) {
         const t = nearestBoss(bosses, this.x, this.z);
         if (t) return angTo(this.x, this.z, t.x, t.z);
+      }
+      if (melee && game().settings.mobile) {
+        const t = nearestBoss(bosses, this.x, this.z);   // no hover pointer on touch — swing at the nearest boss
+        return t ? angTo(this.x, this.z, t.x, t.z) : this.facing;
       }
       const w = render().worldFromScreen(require('input').mouse.x, require('input').mouse.y);
       return angTo(this.x, this.z, w.x, w.z);
@@ -66,8 +70,8 @@ RB.define('player', function (require) {
       const inDodge = this.dodgeT >= 0;
       const inAttack = this.attackT >= 0;
 
-      let mx = (Input.down('right') ? 1 : 0) - (Input.down('left') ? 1 : 0) + Input.gp.ax;
-      let mz = (Input.down('down') ? 1 : 0) - (Input.down('up') ? 1 : 0) + Input.gp.az;
+      let mx = (Input.down('right') ? 1 : 0) - (Input.down('left') ? 1 : 0) + Input.gp.ax + Input.touch.ax;
+      let mz = (Input.down('down') ? 1 : 0) - (Input.down('up') ? 1 : 0) + Input.gp.az + Input.touch.az;
       const ml = Math.hypot(mx, mz);
       if (ml > 1) { mx /= ml; mz /= ml; }
       this.moving = ml > 0.05;
@@ -97,7 +101,7 @@ RB.define('player', function (require) {
         if (this.spend(cost)) {
           this.attackT = 0; this.attackUnarmed = unarmed; this.attackHitDone = false;
           if (!unarmed) { if (this.comboWindow <= 0) this.attackIdx = 0; } else this.attackIdx = 0;
-          this.facing = this.aimAngle(bosses);
+          this.facing = this.aimAngle(bosses, true);
           audio().sfx(this.attackIdx === 2 ? 'swing2' : 'swing');
         }
       }

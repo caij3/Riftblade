@@ -72,6 +72,13 @@ RB.define('ui', function (require) {
       const bindToggle = (id, key) => { const t = $(id);
         t.onclick = () => { Game.settings[key] = !Game.settings[key]; t.classList.toggle('on', Game.settings[key]); }; };
       bindToggle('tglShake', 'shake'); bindToggle('tglCB', 'cbSafe');
+      const btnMenu = $('btnMenu');
+      if (btnMenu) btnMenu.onclick = () => { Audio2.resume(); Game.togglePause(true); };
+      const tglM = $('tglMobile');
+      if (tglM) {
+        tglM.classList.toggle('on', !!Game.settings.mobile);
+        tglM.onclick = () => { Game.settings.mobile = !Game.settings.mobile; tglM.classList.toggle('on', Game.settings.mobile); };
+      }
       this.refreshBinds();
     }
   };

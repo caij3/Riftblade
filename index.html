@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>RIFTBLADE</title>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,6 +14,8 @@
 
   <div id="objectives"><h3>Training Rites</h3><ul id="objList"></ul></div>
   <div id="toast"></div>
+
+  <button id="btnMenu" aria-label="Menu"><span></span><span></span><span></span></button>
 
   <div id="mainMenu" class="overlay show">
     <h1 class="title">RIFT<span class="rift">BLADE</span></h1>
@@ -25,7 +29,8 @@
     </div>
     <div class="hint">
       <kbd>WASD</kbd> move &middot; <kbd>LMB</kbd> attack &middot; <kbd>RMB</kbd> throw / teleport &middot; hold <kbd>RMB</kbd> recall<br>
-      <kbd>Shift</kbd> dodge &middot; <kbd>Tab</kbd> lock-on &middot; <kbd>Esc</kbd> pause &nbsp;&mdash;&nbsp; gamepad supported
+      <kbd>Shift</kbd> dodge &middot; <kbd>Tab</kbd> lock-on &middot; <kbd>Esc</kbd> pause &nbsp;&mdash;&nbsp; gamepad supported<br>
+      on a phone? open <kbd>&#9776;</kbd> &middot; Settings &middot; enable Touch controls
     </div>
   </div>
 
@@ -51,6 +56,8 @@
       <div class="srow"><label>Screen shake</label><div class="toggle on" id="tglShake"></div></div>
       <div class="srow"><label>Colorblind-safe telegraphs (shape + pattern)</label><div class="toggle on" id="tglCB"></div></div>
       <div class="srow"><label>Camera smoothing</label><div><input type="range" id="camSens" min="1" max="100" value="55"><span class="val" id="camSensV">55</span></div></div>
+      <div class="secthead">Controls</div>
+      <div class="srow"><label>Touch controls (mobile) &mdash; on-screen stick &amp; buttons</label><div class="toggle" id="tglMobile"></div></div>
       <div class="secthead">Key Bindings &mdash; click, then press a key</div>
       <div id="bindRows"></div>
       <div class="panelfoot">
@@ -120,6 +127,7 @@
 <script src="src/enemies/shepherd.js"></script>
 <script src="src/systems/render.js"></script>
 <script src="src/systems/tutorial.js"></script>
+<script src="src/systems/mobile.js"></script>
 <script src="src/ui/ui.js"></script>
 <script src="src/core/game.js"></script>
 <script src="src/core/boot.js"></script>
