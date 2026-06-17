@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RIFTBLADE</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <div id="objectives"><h3>Training Rites</h3><ul id="objList"></ul></div>
+  <div id="toast"></div>
+
+  <div id="mainMenu" class="overlay show">
+    <h1 class="title">RIFT<span class="rift">BLADE</span></h1>
+    <div class="subtitle">a boss rush of blade and breach</div>
+    <div class="menu">
+      <button class="mbtn" id="btnStart">Begin</button>
+      <button class="mbtn" id="btnTutorial">Tutorial Arena</button>
+      <button class="mbtn ember" id="btnBossRush" disabled>Boss Rush &mdash; locked</button>
+      <button class="mbtn" id="btnSettings">Settings</button>
+      <button class="mbtn" id="btnCreditsMenu">Credits</button>
+    </div>
+    <div class="hint">
+      <kbd>WASD</kbd> move &middot; <kbd>LMB</kbd> attack &middot; <kbd>RMB</kbd> throw / teleport &middot; hold <kbd>RMB</kbd> recall<br>
+      <kbd>Shift</kbd> dodge &middot; <kbd>Tab</kbd> lock-on &middot; <kbd>Esc</kbd> pause &nbsp;&mdash;&nbsp; gamepad supported
+    </div>
+  </div>
+
+  <div id="pauseMenu" class="overlay">
+    <h2 style="font-family:var(--serif);letter-spacing:.3em;font-weight:400;font-size:28px;text-transform:uppercase">Paused</h2>
+    <div class="menu">
+      <button class="mbtn" id="btnResume">Resume</button>
+      <button class="mbtn" id="btnRestart">Restart</button>
+      <button class="mbtn" id="btnPauseSettings">Settings</button>
+      <button class="mbtn" id="btnQuit">Abandon to Menu</button>
+    </div>
+  </div>
+
+  <div id="settingsMenu" class="overlay">
+    <div class="panel">
+      <h2>Settings</h2>
+      <div class="secthead">Audio</div>
+      <div class="srow"><label>Master volume</label><div><input type="range" id="volMaster" min="0" max="100" value="80"><span class="val" id="volMasterV">80</span></div></div>
+      <div class="srow"><label>Music volume</label><div><input type="range" id="volMusic" min="0" max="100" value="60"><span class="val" id="volMusicV">60</span></div></div>
+      <div class="srow"><label>SFX volume</label><div><input type="range" id="volSfx" min="0" max="100" value="85"><span class="val" id="volSfxV">85</span></div></div>
+      <div class="secthead">Display &amp; Camera</div>
+      <div class="srow"><label>Fullscreen</label><button class="bindbtn" id="btnFullscreen">Toggle</button></div>
+      <div class="srow"><label>Screen shake</label><div class="toggle on" id="tglShake"></div></div>
+      <div class="srow"><label>Colorblind-safe telegraphs (shape + pattern)</label><div class="toggle on" id="tglCB"></div></div>
+      <div class="srow"><label>Camera smoothing</label><div><input type="range" id="camSens" min="1" max="100" value="55"><span class="val" id="camSensV">55</span></div></div>
+      <div class="secthead">Key Bindings &mdash; click, then press a key</div>
+      <div id="bindRows"></div>
+      <div class="panelfoot">
+        <button class="mbtn" id="btnResetBinds" style="font-size:13px;padding:9px 20px">Reset Binds</button>
+        <button class="mbtn" id="btnCloseSettings" style="font-size:13px;padding:9px 20px">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deathOverlay" class="overlay">
+    <div class="stinger">YOU ARE UNDONE</div>
+    <div class="substinger" id="deathSub"></div>
+    <div class="menu">
+      <button class="mbtn ember" id="btnRetry">Rise Again</button>
+      <button class="mbtn" id="btnDeathQuit">Abandon to Menu</button>
+    </div>
+  </div>
+
+  <div id="victoryOverlay" class="overlay">
+    <div class="stinger" id="victoryText">RIFT SEALED</div>
+    <div class="substinger" id="victorySub"></div>
+    <div class="menu"><button class="mbtn" id="btnContinue">Continue</button></div>
+  </div>
+
+  <div id="resultsOverlay" class="overlay">
+    <h2 style="font-family:var(--serif);letter-spacing:.34em;font-weight:400;font-size:30px;text-transform:uppercase;color:var(--rift)">The Rift Is Sealed</h2>
+    <div class="resgrid" id="resGrid"></div>
+    <div class="menu" style="margin-top:40px">
+      <button class="mbtn" id="btnResultsCredits">Credits</button>
+      <button class="mbtn" id="btnResultsMenu">Return to Menu</button>
+    </div>
+  </div>
+
+  <div id="creditsOverlay" class="overlay">
+    <h2 style="font-family:var(--serif);letter-spacing:.34em;font-weight:400;font-size:26px;text-transform:uppercase">Credits &amp; Attribution</h2>
+    <div class="credits">
+      <h3>Design Source</h3>
+      RIFTBLADE &mdash; built to the v1.0 MVP specification. Two bosses, one blade, no mercy.
+      <h3>Code</h3>
+      Original engine &amp; game code written for this build (HTML5 Canvas + Web Audio). Fixed-timestep 60&nbsp;Hz simulation. Zero network calls; runs fully offline.
+      <h3>Art</h3>
+      All characters, bosses, arenas, telegraphs and UI are original procedural vector art drawn at runtime. No third-party assets are included. (Policy A-01 satisfied: nothing to attribute, nothing encumbered.)
+      <h3>Audio</h3>
+      All sound effects and music are synthesized at runtime with the Web Audio API. Original composition; no recorded samples.
+      <h3>Typography</h3>
+      System font stacks only (serif/system-ui) &mdash; no embedded or fetched fonts, keeping the build dependency-free and offline.
+      <h3>Asset Manifest (A-02)</h3>
+      <span style="font-family:monospace;font-size:12px">procedural://riftblade/* &mdash; license: original work, CC0 for this build &mdash; author: Jackson Cai &mdash; modifications: n/a</span>
+    </div>
+    <div class="menu" style="margin-top:26px"><button class="mbtn" id="btnCreditsBack">Back</button></div>
+  </div>
+</div>
+<script src="src/core/registry.js"></script>
+<script src="src/core/config.js"></script>
+<script src="src/utils/helpers.js"></script>
+<script src="src/core/save.js"></script>
+<script src="src/systems/input.js"></script>
+<script src="src/systems/audio.js"></script>
+<script src="src/world/world.js"></script>
+<script src="src/entities/weapon.js"></script>
+<script src="src/entities/player.js"></script>
+<script src="src/entities/projectiles.js"></script>
+<script src="src/enemies/boss.js"></script>
+<script src="src/enemies/warden.js"></script>
+<script src="src/enemies/choir.js"></script>
+<script src="src/enemies/dummy.js"></script>
+<script src="src/enemies/shepherd.js"></script>
+<script src="src/systems/render.js"></script>
+<script src="src/systems/tutorial.js"></script>
+<script src="src/ui/ui.js"></script>
+<script src="src/core/game.js"></script>
+<script src="src/core/boot.js"></script>
+<script src="src/index.js"></script>
+</body>
+</html>
