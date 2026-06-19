@@ -17,6 +17,8 @@
 
   <button id="btnMenu" aria-label="Menu"><span></span><span></span><span></span></button>
 
+  <div id="rotateNotice"><div class="rot-icon">&#10227;</div><div>Rotate your device<span>RIFTBLADE plays in landscape</span></div></div>
+
   <div id="mainMenu" class="overlay show">
     <h1 class="title">RIFT<span class="rift">BLADE</span></h1>
     <div class="subtitle">a boss rush of blade and breach</div>
@@ -53,6 +55,7 @@
       <div class="srow"><label>SFX volume</label><div><input type="range" id="volSfx" min="0" max="100" value="85"><span class="val" id="volSfxV">85</span></div></div>
       <div class="secthead">Display &amp; Camera</div>
       <div class="srow"><label>Fullscreen</label><button class="bindbtn" id="btnFullscreen">Toggle</button></div>
+      <div class="srow"><label>Stretch to fill screen (off = keep aspect ratio)</label><div class="toggle on" id="tglStretch"></div></div>
       <div class="srow"><label>Screen shake</label><div class="toggle on" id="tglShake"></div></div>
       <div class="srow"><label>Colorblind-safe telegraphs (shape + pattern)</label><div class="toggle on" id="tglCB"></div></div>
       <div class="srow"><label>Camera smoothing</label><div><input type="range" id="camSens" min="1" max="100" value="55"><span class="val" id="camSensV">55</span></div></div>

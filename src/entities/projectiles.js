@@ -59,18 +59,19 @@ RB.define('projectiles', function (require) {
     for (let i = W.hazards.length - 1; i >= 0; i--) {
       const hz = W.hazards[i]; hz.t += dt;
       switch (hz.type) {
-        case 'ring': {
+        case 'ring': {                               // Warden W3: expanding shockwave, then a settled ring of fire
           const c = CONFIG.warden.attacks.W3;
+          const spreading = hz.t < c.expandTime;
           hz.r = lerp(c.rMin, c.rMax, clamp(hz.t / c.expandTime, 0, 1));
           const d = dist(hz.x, hz.z, Player.x, Player.z);
-          if (!hz.hit && Math.abs(d - hz.r) < c.band / 2 + Player.radius) {
-            if (Player.takeDamage(c.damage, 'ring')) { hz.hit = true; hz.burnAt = hz.t + 0.8; }
-          }
-          if (hz.hit && hz.burnAt != null && hz.t >= hz.burnAt && !Player.dead) {
-            Player.hp = Math.max(0, Player.hp - c.burn);
-            W.dmgNum(Player.x, Player.z, 1.5, c.burn, 'player');
-            if (Player.hp <= 0) { Player.dead = true; game().onPlayerDeath(); }
-            hz.burnAt = null;
+          const onBand = Math.abs(d - hz.r) < c.band / 2 + Player.radius;
+          if (spreading) {                            // moving edge: one solid hit as it sweeps past you
+            if (onBand && !hz.hit && Player.takeDamage(c.damage, 'ring')) hz.hit = true;
+          } else if (onBand) {                        // settled floor hazard: burns while you stand on the ring
+            hz.tick = (hz.tick || 0) - dt;
+            if (hz.tick <= 0) { Player.takeDamage(c.burn, 'fire'); hz.tick = c.burnInterval; }
+          } else {
+            hz.tick = 0;                              // off the ring -> stepping back on burns immediately
           }
           if (hz.t >= c.expandTime + c.lingerTime) W.hazards.splice(i, 1);
           break;

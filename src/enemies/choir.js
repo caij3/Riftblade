@@ -70,7 +70,7 @@ RB.define('choir', function (require) {
   }
 
   class Choir extends Boss {
-    constructor() { super(CONFIG.choir, 0, -5); this.kind = 'choir'; this.hitIdx = 0;
+    constructor() { super(CONFIG.choir, 2, -5); this.kind = 'choir'; this.hitIdx = 0;
       this.sinceC3 = 0; this.glue = 0; this.dmgWindow = []; this.vortexActive = false;
       this.echoes = []; this.fightT = 0; }
     shardCount() { return this.phase === 1 ? this.cfg.attacks.C2.shards : this.cfg.attacks.C2.shardsP2; }

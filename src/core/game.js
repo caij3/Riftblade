@@ -28,7 +28,7 @@ RB.define('game', function (require) {
 
   const Game = {
     mode: 'menu', bosses: [], paused: false, isRush: false,
-    settings: { shake: true, cbSafe: true, camSmooth: 55, mobile: false },
+    settings: { shake: true, cbSafe: true, camSmooth: 55, mobile: false, stretch: true },
     simTime: 0, fightTime: 0, arenaTheme: 'forge',
     sequence: [], encounterIndex: 0, currentEncounter: null,
     runStats: { deaths: 0, hitsTaken: 0, clearTimes: {} },

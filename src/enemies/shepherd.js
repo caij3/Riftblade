@@ -73,7 +73,7 @@ RB.define('shepherd', function (require) {
 
   class Shepherd extends Boss {
     constructor() {
-      super(CONFIG.shepherd, 0, 0);
+      super(CONFIG.shepherd, 2, 0);
       this.kind = 'shepherd';
       this.fightT = 0; this.campT = 0; this.sinceN7 = 12;
       this._lastAnchor = null; this.sanctified = null;

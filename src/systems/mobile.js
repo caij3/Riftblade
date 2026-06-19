@@ -55,9 +55,22 @@ RB.define('mobile', function (require) {
       this._bindButton(atkEl,  () => { const I = input(); I.pressed.add('__LMB'); });
       this._bindButton(dashEl, () => { const I = input(); I.pressed.add(I.binds.dodge); });
       this._bindRift();
+      this._preventZoom();
 
       built = true;
       this.syncUI(true);
+    },
+
+    _preventZoom() {
+      // touch-action:none + user-scalable=no handle Android & double-tap; iOS Safari
+      // still pinch-zooms via gesture events, so cancel those explicitly.
+      const stop = e => e.preventDefault();
+      const opt = { passive: false };
+      document.addEventListener('gesturestart', stop, opt);
+      document.addEventListener('gesturechange', stop, opt);
+      document.addEventListener('gestureend', stop, opt);
+      document.addEventListener('dblclick', stop, opt);
+      document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, opt);
     },
 
     _bindJoystick() {

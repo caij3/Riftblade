@@ -56,7 +56,12 @@ RB.define('ui', function (require) {
       $('btnResetBinds').onclick = () => { Input.binds = { ...Input.DEFAULT_BINDS }; this.refreshBinds(); };
       $('btnFullscreen').onclick = () => {
         if (document.fullscreenElement) document.exitFullscreen();
-        else document.getElementById('wrap').requestFullscreen().catch(() => {});
+        else {
+          const p = document.getElementById('wrap').requestFullscreen();
+          if (p && p.then) p.then(() => {
+            try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (_) {}
+          }).catch(() => {});
+        }
       };
       $('btnRetry').onclick = () => Game.retry();
       $('btnDeathQuit').onclick = () => Game.toMenu();
@@ -78,6 +83,11 @@ RB.define('ui', function (require) {
       if (tglM) {
         tglM.classList.toggle('on', !!Game.settings.mobile);
         tglM.onclick = () => { Game.settings.mobile = !Game.settings.mobile; tglM.classList.toggle('on', Game.settings.mobile); };
+      }
+      const tglS = $('tglStretch');
+      if (tglS) {
+        tglS.classList.toggle('on', Game.settings.stretch !== false);
+        tglS.onclick = () => { Game.settings.stretch = !Game.settings.stretch; tglS.classList.toggle('on', Game.settings.stretch); require('boot').fitCanvas(); };
       }
       this.refreshBinds();
     }

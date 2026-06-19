@@ -19,6 +19,14 @@ RB.define('render', function (require) {
     worldFromScreen(px, py) {
       return { x: (px - this.W / 2) / this.S + this.cam.x, z: (py - this.H * 0.56) / (this.S * 0.62) + this.cam.z };
     },
+    hudInset() {
+      // Canvas-space gap reserved at the top-right so the FPS/timer readouts clear the
+      // DOM hamburger (a ~44px button at right:16px). The button lives in viewport px,
+      // the HUD in canvas px, so convert using the live display width (handles stretch
+      // and letterbox alike).
+      const dispW = (this.cv && this.cv.clientWidth) || this.W;
+      return Math.max(14, this.W * 68 / dispW);
+    },
     updateCamera(dt) {
       const Player = player();
       let tx = Player.x, tz = Player.z;
@@ -105,7 +113,7 @@ RB.define('render', function (require) {
       c.save();
       c.font = '12px system-ui'; c.textAlign = 'right';
       c.fillStyle = this.fps < 50 ? '#ff5a5a' : this.fps < 58 ? '#ffc46b' : '#7d7390';
-      c.fillText(`${Math.round(this.fps)} FPS`, W - 12, 16);
+      c.fillText(`${Math.round(this.fps)} FPS`, W - this.hudInset(), 16);
       c.restore();
     },
     drawArena() {
@@ -763,7 +771,7 @@ RB.define('render', function (require) {
       }
       if (Game.inFight()) {
         c.fillStyle = '#7d7390'; c.font = '13px Georgia'; c.textAlign = 'right';
-        c.fillText(fmtTime(Game.fightTime), this.W - 24, 34); c.textAlign = 'left';
+        c.fillText(fmtTime(Game.fightTime), this.W - this.hudInset(), 34); c.textAlign = 'left';
       }
       c.restore();
     }
