@@ -1,5 +1,5 @@
 'use strict';
 /* save — in-memory persistence stand-in (swap for localStorage when shipping). */
 RB.define('save', function () {
-  return { bossRushUnlocked: false, bestTime: null };
+  return { bossRushUnlocked: false, bestTime: null, bossesSeen: {}, bossesBeaten: {}, bestBossTimes: {}, campaignProgress: 0 };
 });

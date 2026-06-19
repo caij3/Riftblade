@@ -27,7 +27,8 @@ RB.define('game', function (require) {
   const encOf = id => CONFIG.encounters.list[id];
 
   const Game = {
-    mode: 'menu', bosses: [], paused: false, isRush: false,
+    mode: 'menu', bosses: [], paused: false, isRush: false, isFullRun: true,
+    isCampaign: false, isDict: false,
     settings: { shake: true, cbSafe: true, camSmooth: 55, mobile: false, stretch: true },
     simTime: 0, fightTime: 0, arenaTheme: 'forge',
     sequence: [], encounterIndex: 0, currentEncounter: null,
@@ -38,10 +39,38 @@ RB.define('game', function (require) {
       const c = this.bosses.find(b => b.kind === 'choir');
       return (c && c.fightT > CONFIG.choir.enrageTime) ? CONFIG.choir.enrageShardMult : 1;
     },
-    startCampaign() { this.isRush = false; this.resetRun(); this.startRun(CONFIG.encounters.campaign); },
+    // Campaign: play the ordered sequence, but RESUME from where you left off.
+    // Save.campaignProgress is the index of the next boss to clear; it advances as
+    // you beat each campaign boss (onBossDefeated) and resets once the run is finished.
+    startCampaign() {
+      const seq = CONFIG.encounters.campaign;
+      let at = Save.campaignProgress | 0;
+      if (at < 0 || at >= seq.length) at = 0;          // finished (or invalid) -> start fresh
+      this.isRush = false; this.isCampaign = true; this.isDict = false;
+      this.isFullRun = at === 0;                       // only a fresh full run claims the best total
+      this.resetRun();
+      this.startRun(seq.slice(at));
+    },
     startBossRush() {
-      this.isRush = true; this.resetRun(); this.startRun(CONFIG.encounters.campaign);
+      this.isRush = true; this.isCampaign = false; this.isDict = false; this.isFullRun = true;
+      this.resetRun(); this.startRun(CONFIG.encounters.campaign);
       ui().toast('BOSS RUSH — one tally of deaths, no respite', 3.5);
+    },
+    // Boss Dictionary (chapter-select): replay a SINGLE already-beaten boss in
+    // isolation. Beating it does NOT continue the campaign — it returns you to the
+    // dictionary (see continueAfterVictory). It never advances campaign progress and
+    // never claims the full-campaign records.
+    startBossFight(id) {
+      const seq = CONFIG.encounters.campaign;
+      if (seq.indexOf(id) < 0) return;
+      this.isRush = false; this.isCampaign = false; this.isDict = true; this.isFullRun = false;
+      this.resetRun(); this.startRun([id]);
+    },
+    dictEntries() {
+      return CONFIG.encounters.campaign
+        .filter(id => Save.bossesBeaten[id])
+        .map(id => { const e = encOf(id), best = Save.bestBossTimes[id];
+          return { id, label: e.label || id, intro: e.intro || '', bestStr: best != null ? fmtTime(best) : null }; });
     },
     resetRun() { this.runStats = { deaths: 0, hitsTaken: 0, clearTimes: {} }; },
     startRun(sequence) {
@@ -50,6 +79,7 @@ RB.define('game', function (require) {
       this.startEncounter(this.sequence[0]);
     },
     startTutorial() {
+      this.isRush = false; this.isCampaign = false; this.isDict = false;
       this.mode = 'tutorial'; this.arenaTheme = 'rift';
       world().reset(CONFIG.tutorial.arena);
       this.bosses = [new (require('dummy'))()];
@@ -63,6 +93,7 @@ RB.define('game', function (require) {
     startEncounter(id) {
       const enc = encOf(id);
       this.currentEncounter = id;
+      Save.bossesSeen[id] = true;                     // faced once -> unlocked in the Boss Dictionary
       this.mode = 'fight'; this.fightTime = 0;
       this.arenaTheme = enc.theme;
       ui().hideAll(); ui().el('objectives').classList.remove('show');
@@ -91,9 +122,17 @@ RB.define('game', function (require) {
       if (b.kind === 'dummy' || b.kind === 'echo') return;
       for (const e of this.bosses) if (e.kind === 'echo' && !e.dead) e.die();
       this.runStats.clearTimes[this.currentEncounter] = this.fightTime;
+      Save.bossesBeaten[this.currentEncounter] = true;   // beaten once -> appears in the Boss Dictionary
+      if (Save.bestBossTimes[this.currentEncounter] == null || this.fightTime < Save.bestBossTimes[this.currentEncounter])
+        Save.bestBossTimes[this.currentEncounter] = this.fightTime;
+      if (this.isCampaign) {                             // remember progress so the campaign resumes here
+        const at = CONFIG.encounters.campaign.indexOf(this.currentEncounter);
+        if (at >= 0 && at + 1 > Save.campaignProgress) Save.campaignProgress = at + 1;
+      }
       audio().stopMusic();
       this.pendingVictory = this.currentEncounter;
       const enc = encOf(this.currentEncounter);
+      const cont = ui().el('btnContinue'); if (cont) cont.textContent = this.isDict ? 'Back to Dictionary' : 'Continue';
       setTimeout(() => {
         ui().el('victoryText').textContent = enc.victory;
         ui().el('victorySub').textContent = `cleared in ${fmtTime(this.fightTime)} — ${this.runStats.hitsTaken} hits taken this run`;
@@ -102,6 +141,13 @@ RB.define('game', function (require) {
     },
     continueAfterVictory() {
       ui().hideAll();
+      if (this.isDict) {                              // chapter-select: one boss, then back to the dictionary
+        this.pendingVictory = null;
+        this.mode = 'menu'; this.paused = false; this.bosses = [];
+        audio().music('menu');
+        ui().openDictionary();
+        return;
+      }
       const next = this.encounterIndex + 1;
       if (next < this.sequence.length) {
         const carryHp = player().hp;                 // rush: no respite
@@ -114,10 +160,18 @@ RB.define('game', function (require) {
       this.pendingVictory = null;
     },
     showResults() {
-      Save.bossRushUnlocked = true; ui().updateBossRushBtn();
+      const campaign = CONFIG.encounters.campaign;
+      const completedCampaign = this.isCampaign && (Save.campaignProgress | 0) >= campaign.length;
+      if (this.isFullRun) {
+        const total0 = this.sequence.reduce((s, id) => s + (this.runStats.clearTimes[id] || 0), 0);
+        if (Save.bestTime === null || total0 < Save.bestTime) Save.bestTime = total0;
+      }
+      if (this.isFullRun || completedCampaign) {        // finishing the campaign (fresh or resumed) unlocks Boss Rush
+        Save.bossRushUnlocked = true; ui().updateBossRushBtn();
+      }
+      if (completedCampaign) Save.campaignProgress = 0;  // campaign done -> next time starts fresh
       const times = this.runStats.clearTimes;
       const total = this.sequence.reduce((s, id) => s + (times[id] || 0), 0);
-      if (Save.bestTime === null || total < Save.bestTime) Save.bestTime = total;
       const g = ui().el('resGrid');
       g.innerHTML = '';
       const row = (k, v) => { const a = document.createElement('div'); a.className = 'k'; a.textContent = k;
@@ -126,7 +180,7 @@ RB.define('game', function (require) {
       row('Total clear time', fmtTime(total));
       row('Deaths', this.runStats.deaths);
       row('Hits taken', this.runStats.hitsTaken);
-      row('Best total', fmtTime(Save.bestTime));
+      row('Best total', Save.bestTime != null ? fmtTime(Save.bestTime) : '—');
       if (this.isRush) row('Mode', 'Boss Rush');
       this.mode = 'menu';
       ui().hideAll(); ui().show('resultsOverlay');

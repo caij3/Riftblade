@@ -23,8 +23,9 @@
     <h1 class="title">RIFT<span class="rift">BLADE</span></h1>
     <div class="subtitle">a boss rush of blade and breach</div>
     <div class="menu">
-      <button class="mbtn" id="btnStart">Begin</button>
+      <button class="mbtn" id="btnStart">Campaign Mode</button>
       <button class="mbtn" id="btnTutorial">Tutorial Arena</button>
+      <button class="mbtn" id="btnDict">Boss Dictionary</button>
       <button class="mbtn ember" id="btnBossRush" disabled>Boss Rush &mdash; locked</button>
       <button class="mbtn" id="btnSettings">Settings</button>
       <button class="mbtn" id="btnCreditsMenu">Credits</button>
@@ -91,6 +92,15 @@
     <div class="menu" style="margin-top:40px">
       <button class="mbtn" id="btnResultsCredits">Credits</button>
       <button class="mbtn" id="btnResultsMenu">Return to Menu</button>
+    </div>
+  </div>
+
+  <div id="dictOverlay" class="overlay">
+    <div class="panel dictpanel">
+      <h2>Boss Dictionary</h2>
+      <p class="dicthint">Foes you have defeated. Choose one to fight again on its own — beating it returns you here.</p>
+      <div class="bossgrid" id="bossGrid"></div>
+      <div class="panelfoot"><button class="mbtn" id="btnDictBack" style="font-size:13px;padding:9px 20px">Back</button></div>
     </div>
   </div>
 

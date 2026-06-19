@@ -39,11 +39,33 @@ RB.define('ui', function (require) {
       b.disabled = !Save.bossRushUnlocked;
       b.textContent = Save.bossRushUnlocked ? 'Boss Rush' : 'Boss Rush — locked';
     },
+    buildDictionary() {
+      const grid = this.el('bossGrid'); grid.innerHTML = '';
+      const entries = game().dictEntries();
+      if (!entries.length) {
+        const empty = document.createElement('div'); empty.className = 'dict-empty';
+        empty.textContent = 'No foes recorded yet. Defeat them in the campaign to unlock them here.';
+        grid.appendChild(empty); return;
+      }
+      for (const e of entries) {
+        const card = document.createElement('button'); card.className = 'bcard';
+        const name = document.createElement('div'); name.className = 'bcard-name'; name.textContent = e.label;
+        const sub = document.createElement('div'); sub.className = 'bcard-sub'; sub.textContent = e.intro;
+        const time = document.createElement('div'); time.className = 'bcard-time';
+        time.textContent = e.bestStr ? `best clear ${e.bestStr}` : 'not yet cleared';
+        card.appendChild(name); card.appendChild(sub); card.appendChild(time);
+        card.onclick = () => { audio().resume(); game().startBossFight(e.id); };
+        grid.appendChild(card);
+      }
+    },
+    openDictionary() { this.buildDictionary(); this.show('dictOverlay'); },
     init() {
       const $ = id => this.el(id);
       const Audio2 = audio(), Game = game(), Input = input();
       $('btnStart').onclick = () => { Audio2.resume(); Game.startCampaign(); };
       $('btnTutorial').onclick = () => { Audio2.resume(); Game.startTutorial(); };
+      $('btnDict').onclick = () => { this.hide('mainMenu'); this.openDictionary(); };
+      $('btnDictBack').onclick = () => { this.hide('dictOverlay'); this.show('mainMenu'); };
       $('btnBossRush').onclick = () => { Audio2.resume(); if (Save.bossRushUnlocked) Game.startBossRush(); };
       $('btnSettings').onclick = () => { this.hide('mainMenu'); this.show('settingsMenu'); this.settingsFrom = 'mainMenu'; };
       $('btnCreditsMenu').onclick = () => { this.hide('mainMenu'); this.show('creditsOverlay'); this.creditsFrom = 'mainMenu'; };
