@@ -64,6 +64,7 @@ RB.define('ui', function (require) {
       const Audio2 = audio(), Game = game(), Input = input();
       $('btnStart').onclick = () => { Audio2.resume(); Game.startCampaign(); };
       $('btnTutorial').onclick = () => { Audio2.resume(); Game.startTutorial(); };
+      { const sk = $('btnSkipTutorial'); if (sk) sk.onclick = () => { Audio2.resume(); Game.startCampaign(); }; }
       $('btnDict').onclick = () => { this.hide('mainMenu'); this.openDictionary(); };
       $('btnDictBack').onclick = () => { this.hide('dictOverlay'); this.show('mainMenu'); };
       $('btnBossRush').onclick = () => { Audio2.resume(); if (Save.bossRushUnlocked) Game.startBossRush(); };

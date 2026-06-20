@@ -12,7 +12,7 @@
 <div id="wrap">
   <canvas id="game" width="1280" height="720"></canvas>
 
-  <div id="objectives"><h3>Training Rites</h3><ul id="objList"></ul></div>
+  <div id="objectives"><h3>Training Rites</h3><ul id="objList"></ul><p id="objHow"></p><button id="btnSkipTutorial">Skip Tutorial &#9654;</button></div>
   <div id="toast"></div>
 
   <button id="btnMenu" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -25,7 +25,7 @@
     <div class="menu">
       <button class="mbtn" id="btnStart">Campaign Mode</button>
       <button class="mbtn" id="btnTutorial">Tutorial Arena</button>
-      <button class="mbtn" id="btnDict">Boss Dictionary</button>
+      <button class="mbtn" id="btnDict">Boss Library</button>
       <button class="mbtn ember" id="btnBossRush" disabled>Boss Rush &mdash; locked</button>
       <button class="mbtn" id="btnSettings">Settings</button>
       <button class="mbtn" id="btnCreditsMenu">Credits</button>
@@ -97,7 +97,7 @@
 
   <div id="dictOverlay" class="overlay">
     <div class="panel dictpanel">
-      <h2>Boss Dictionary</h2>
+      <h2>Boss Library</h2>
       <p class="dicthint">Foes you have defeated. Choose one to fight again on its own — beating it returns you here.</p>
       <div class="bossgrid" id="bossGrid"></div>
       <div class="panelfoot"><button class="mbtn" id="btnDictBack" style="font-size:13px;padding:9px 20px">Back</button></div>
@@ -108,7 +108,7 @@
     <h2 style="font-family:var(--serif);letter-spacing:.34em;font-weight:400;font-size:26px;text-transform:uppercase">Credits &amp; Attribution</h2>
     <div class="credits">
       <h3>Design Source</h3>
-      RIFTBLADE &mdash; built to the v1.0 MVP specification. Two bosses, one blade, no mercy.
+      RIFTBLADE &mdash; built to the v1.0 MVP specification. One blade, no mercy.
       <h3>Code</h3>
       Original engine &amp; game code written for this build (HTML5 Canvas + Web Audio). Fixed-timestep 60&nbsp;Hz simulation. Zero network calls; runs fully offline.
       <h3>Art</h3>

@@ -67,6 +67,16 @@
   #objectives li.done{color:var(--rift);text-decoration:line-through;text-decoration-color:rgba(70,224,200,.5)}
   #objectives li::before{content:'\25C7\00A0'}
   #objectives li.done::before{content:'\25C6\00A0'}
+  #objectives li.active{color:var(--bone);font-weight:600;text-shadow:0 0 10px rgba(70,224,200,.35)}
+  #objectives li.active::before{content:'\25BA\00A0';color:var(--rift)}
+  #objHow{margin-top:11px;padding:9px 11px;border-left:3px solid var(--rift);border-radius:0 4px 4px 0;
+    background:rgba(70,224,200,.12);font-size:13px;line-height:1.45;font-weight:600;
+    color:var(--bone);letter-spacing:.02em;max-width:230px;text-shadow:0 0 9px rgba(70,224,200,.3)}
+  #objHow:empty{display:none}
+  #btnSkipTutorial{margin-top:12px;width:100%;background:transparent;border:1px solid #2c2638;color:#7d7390;
+    font-family:var(--serif);letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;font-size:10px;
+    padding:7px 0;cursor:pointer;transition:border-color .15s,color .15s}
+  #btnSkipTutorial:hover,#btnSkipTutorial:focus-visible{border-color:var(--rift);color:var(--rift);outline:none}
 
   #toast{position:absolute;left:50%;top:16%;transform:translateX(-50%);z-index:6;font-family:var(--serif);
     letter-spacing:.22em;text-indent:.22em;font-size:18px;color:var(--bone);text-shadow:0 0 14px rgba(0,0,0,.9);

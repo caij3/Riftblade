@@ -49,6 +49,8 @@ RB.define('game', function (require) {
       this.isRush = false; this.isCampaign = true; this.isDict = false;
       this.isFullRun = at === 0;                       // only a fresh full run claims the best total
       this.resetRun();
+      if (at === 0) this.resetCampaignRun();           // fresh campaign -> drop any stale partial run
+      else this.loadCampaignRun();                     // resuming -> restore scores from bosses beaten before leaving
       this.startRun(seq.slice(at));
     },
     startBossRush() {
@@ -73,6 +75,21 @@ RB.define('game', function (require) {
           return { id, label: e.label || id, intro: e.intro || '', bestStr: best != null ? fmtTime(best) : null }; });
     },
     resetRun() { this.runStats = { deaths: 0, hitsTaken: 0, clearTimes: {} }; },
+    // --- persisted campaign run (survives leaving mid-campaign) ---
+    resetCampaignRun() { Save.campaignRun = { clearTimes: {}, deaths: 0, hitsTaken: 0 }; },
+    loadCampaignRun() {                                 // seed this run from the saved partial campaign
+      const cr = Save.campaignRun || (Save.campaignRun = { clearTimes: {}, deaths: 0, hitsTaken: 0 });
+      this.runStats.clearTimes = Object.assign({}, cr.clearTimes);
+      this.runStats.deaths = cr.deaths | 0;
+      this.runStats.hitsTaken = cr.hitsTaken | 0;
+    },
+    saveCampaignRun() {                                 // checkpoint the accumulated scores into Save
+      Save.campaignRun = {
+        clearTimes: Object.assign({}, this.runStats.clearTimes),
+        deaths: this.runStats.deaths | 0,
+        hitsTaken: this.runStats.hitsTaken | 0
+      };
+    },
     startRun(sequence) {
       this.sequence = sequence.slice();
       this.encounterIndex = 0;
@@ -125,9 +142,10 @@ RB.define('game', function (require) {
       Save.bossesBeaten[this.currentEncounter] = true;   // beaten once -> appears in the Boss Dictionary
       if (Save.bestBossTimes[this.currentEncounter] == null || this.fightTime < Save.bestBossTimes[this.currentEncounter])
         Save.bestBossTimes[this.currentEncounter] = this.fightTime;
-      if (this.isCampaign) {                             // remember progress so the campaign resumes here
+      if (this.isCampaign) {                             // remember progress + this run's scores so it resumes here
         const at = CONFIG.encounters.campaign.indexOf(this.currentEncounter);
         if (at >= 0 && at + 1 > Save.campaignProgress) Save.campaignProgress = at + 1;
+        this.saveCampaignRun();                          // checkpoint scores now, in case the player leaves mid-run
       }
       audio().stopMusic();
       this.pendingVictory = this.currentEncounter;
@@ -162,21 +180,25 @@ RB.define('game', function (require) {
     showResults() {
       const campaign = CONFIG.encounters.campaign;
       const completedCampaign = this.isCampaign && (Save.campaignProgress | 0) >= campaign.length;
+      const times = this.runStats.clearTimes;
+      // Campaign results show the WHOLE campaign so bosses cleared before a mid-run exit still
+      // appear with their saved scores (runStats was seeded from Save.campaignRun on resume).
+      // Other modes (rush) just show what was played this run.
+      const displaySeq = this.isCampaign ? campaign : this.sequence;
       if (this.isFullRun) {
-        const total0 = this.sequence.reduce((s, id) => s + (this.runStats.clearTimes[id] || 0), 0);
+        const total0 = displaySeq.reduce((s, id) => s + (times[id] || 0), 0);
         if (Save.bestTime === null || total0 < Save.bestTime) Save.bestTime = total0;
       }
       if (this.isFullRun || completedCampaign) {        // finishing the campaign (fresh or resumed) unlocks Boss Rush
         Save.bossRushUnlocked = true; ui().updateBossRushBtn();
       }
-      if (completedCampaign) Save.campaignProgress = 0;  // campaign done -> next time starts fresh
-      const times = this.runStats.clearTimes;
-      const total = this.sequence.reduce((s, id) => s + (times[id] || 0), 0);
+      if (completedCampaign) { Save.campaignProgress = 0; this.resetCampaignRun(); } // done -> next time starts fresh
+      const total = displaySeq.reduce((s, id) => s + (times[id] || 0), 0);
       const g = ui().el('resGrid');
       g.innerHTML = '';
       const row = (k, v) => { const a = document.createElement('div'); a.className = 'k'; a.textContent = k;
         const b = document.createElement('div'); b.className = 'v'; b.textContent = v; g.appendChild(a); g.appendChild(b); };
-      for (const id of this.sequence) row(`${encOf(id).label || id} clear`, fmtTime(times[id] || 0));
+      for (const id of displaySeq) row(`${encOf(id).label || id} clear`, fmtTime(times[id] || 0));
       row('Total clear time', fmtTime(total));
       row('Deaths', this.runStats.deaths);
       row('Hits taken', this.runStats.hitsTaken);

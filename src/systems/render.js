@@ -8,6 +8,7 @@ RB.define('render', function (require) {
   const game = () => require('game');
   const player = () => require('player');
   const weapon = () => require('weapon');
+  const tutorial = () => require('tutorial');
 
   const Render = {
     cv: null, ctx: null, W: 1280, H: 720, S: 26, cam: { x: 0, z: 0 }, tpFlash: 0, _hp: null,
@@ -81,6 +82,7 @@ RB.define('render', function (require) {
       c.save();
       if (World.shake > 0.01) { c.translate(rand(-1, 1) * World.shake * 11, rand(-1, 1) * World.shake * 8); World.shake *= Math.pow(0.02, dtRender); }
       this.drawArena();
+      this.drawTutorial();
       this.drawHazardsGround();
       this.drawTelegraphs();
       this.drawStrikeTelegraphs();
@@ -115,6 +117,22 @@ RB.define('render', function (require) {
       c.fillStyle = this.fps < 50 ? '#ff5a5a' : this.fps < 58 ? '#ffc46b' : '#7d7390';
       c.fillText(`${Math.round(this.fps)} FPS`, W - this.hudInset(), 16);
       c.restore();
+    },
+    drawTutorial() {
+      const G = game(); if (G.mode !== 'tutorial') return;
+      const T = tutorial();
+      const gate = T.gateMarker;
+      if (gate) {                                   // glowing floor gate to step into
+        const pulse = 0.5 + 0.5 * Math.sin(G.simTime * 4);
+        this.groundDisc(gate.x, gate.z, gate.r * 0.96, `rgba(70,224,200,${0.05 + 0.06 * pulse})`, null);
+        this.groundRing(gate.x, gate.z, gate.r, 0.18, `rgba(70,224,200,${0.55 + 0.4 * pulse})`, true);
+      }
+      const eff = G.bosses[0];
+      if (eff && eff.tele >= 0) {                    // effigy pulse telegraph (dodge rite)
+        const t = eff.tele;
+        this.groundDisc(eff.x, eff.z, eff.teleR, `rgba(255,122,47,${0.10 + 0.30 * t})`,
+          `rgba(255,122,47,${0.5 + 0.5 * t})`, 2 + 2 * t, true);
+      }
     },
     drawArena() {
       const c = this.ctx, a = world().arena; if (!a) return;
@@ -696,9 +714,59 @@ RB.define('render', function (require) {
         c.textAlign = 'left';
       }
     },
+    _hudCallouts: {
+      hp:      'YOUR HEALTH — drops when you take a hit',
+      stamina: 'STAMINA — spent by rift throws & teleports, refilled by attacks',
+      enemyhp: 'ENEMY HEALTH — empty the effigy\u2019s bar to win',
+      blade:   'BLADE STATE — in hand, flying, lodged, or returning',
+      dodge:   'DODGE COOLDOWN — this ring refills as it recharges'
+    },
+    wrapText(text, maxW, font) {
+      const c = this.ctx; c.save(); c.font = font;
+      const words = text.split(' '), lines = []; let cur = '';
+      for (const w of words) {
+        const t = cur ? cur + ' ' + w : w;
+        if (c.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; }
+        else cur = t;
+      }
+      if (cur) lines.push(cur);
+      c.restore(); return lines;
+    },
+    labelBox(lines, x, y, font) {
+      const c = this.ctx; c.save(); c.font = font; c.textAlign = 'left';
+      let w = 0; for (const l of lines) w = Math.max(w, c.measureText(l).width);
+      const padX = 9, padY = 7, lh = 16, bw = w + padX * 2, bh = lines.length * lh + padY * 2;
+      x = clamp(x, 8, this.W - bw - 8); y = clamp(y, 8, this.H - bh - 8);
+      c.fillStyle = 'rgba(10,16,16,.94)'; c.fillRect(x, y, bw, bh);
+      c.strokeStyle = 'rgba(70,224,200,.9)'; c.lineWidth = 1.5; c.strokeRect(x, y, bw, bh);
+      c.fillStyle = '#dfe8f0';
+      for (let i = 0; i < lines.length; i++) c.fillText(lines[i], x + padX, y + padY + 12 + i * lh);
+      c.restore();
+      return { w: bw, h: bh };
+    },
+    // While in the tutorial, spotlight the HUD element the current rite cares about
+    // (hp / stamina / enemy hp / blade state / dodge cooldown) and caption it.
+    drawTutorialHud() {
+      const T = tutorial(); if (!T || T.allDone) return;
+      const r = T.cur(); if (!r || !r.hud) return;
+      const rect = this._hudRects && this._hudRects[r.hud]; if (!rect) return;
+      const c = this.ctx, G = game();
+      const pulse = 0.5 + 0.5 * Math.sin(G.simTime * 5);
+      c.save();
+      c.strokeStyle = `rgba(70,224,200,${0.5 + 0.45 * pulse})`; c.lineWidth = 2.5;
+      c.setLineDash([6, 4]); c.strokeRect(rect.x - 3, rect.y - 3, rect.w + 6, rect.h + 6); c.setLineDash([]);
+      const lines = this.wrapText(this._hudCallouts[r.hud], 250, '12px system-ui');
+      let lx, ly;
+      if (r.hud === 'enemyhp') { lx = rect.x + rect.w / 2 - 130; ly = rect.y - lines.length * 16 - 30; }
+      else if (r.hud === 'dodge' || r.hud === 'blade') { lx = 26; ly = rect.y + rect.h + 14; }
+      else { lx = rect.x + rect.w + 16; ly = rect.y - 2; }   // hp / stamina -> to the right
+      this.labelBox(lines, lx, ly, '12px system-ui');
+      c.restore();
+    },
     drawHUD() {
       const c = this.ctx, P = player(), Weapon = weapon(), Game = game();
       c.save(); c.textAlign = 'left';
+      this._hudRects = {};
       const bx = 28, by = 26, bw = 320, bh = 16;
       c.fillStyle = 'rgba(8,7,11,.75)'; c.fillRect(bx - 3, by - 3, bw + 6, bh + 6);
       c.fillStyle = '#3a1019'; c.fillRect(bx, by, bw, bh);
@@ -713,6 +781,8 @@ RB.define('render', function (require) {
       c.strokeStyle = P.staminaFlash > 0 ? '#ff4545' : exhausted ? '#d8a73e' : '#56505f';
       c.lineWidth = exhausted ? 2 : 1.5;
       c.strokeRect(bx - 3, syy - 3, bw * 0.86 + 6, sh + 6);
+      this._hudRects.hp = { x: bx - 3, y: by - 3, w: bw + 6, h: bh + 6 };
+      this._hudRects.stamina = { x: bx - 3, y: syy - 3, w: bw * 0.86 + 6, h: sh + 6 };
       const ix = bx + 18, iy = syy + 52, ir = 17;
       c.fillStyle = 'rgba(8,7,11,.78)'; c.beginPath(); c.arc(ix, iy, ir + 4, 0, TAU); c.fill();
       const tpCost = CONFIG.player.riftthrow.teleportCost;
@@ -739,6 +809,8 @@ RB.define('render', function (require) {
       const ws = Weapon.state === 'hand' ? 'BLADE: IN HAND' : Weapon.state === 'lodged' ? 'BLADE: LODGED IN FOE' :
         Weapon.state === 'returning' ? 'BLADE: RETURNING' : Weapon.state === 'flying' ? 'BLADE: FLYING' : 'BLADE: EMBEDDED';
       c.fillText(ws, dx + 26, iy + 4);
+      this._hudRects.dodge = { x: dx - 13, y: iy - 13, w: 26, h: 26 };
+      this._hudRects.blade = { x: dx + 23, y: iy - 8, w: 138, h: 17 };
       let bbY = this.H - 64;
       for (const b of Game.bosses) {
         if (b.kind === 'echo' || b.kind === 'risen' || b.dead) continue;
@@ -751,6 +823,7 @@ RB.define('render', function (require) {
         c.fillStyle = b.kind === 'warden' ? '#ff7a2f' : '#cfd5ef';
         c.fillRect(x2, bbY + 2, w2 * (b.hp / b.maxHp), 7);
         c.strokeStyle = '#56505f'; c.lineWidth = 1; c.strokeRect(x2 - 3, bbY - 1, w2 + 6, 13);
+        if (!this._hudRects.enemyhp) this._hudRects.enemyhp = { x: x2 - 3, y: bbY - 1, w: w2 + 6, h: 13 };
         if (b.cfg.phase2At > 0) { c.fillStyle = '#e8e2d6'; c.fillRect(x2 + w2 * b.cfg.phase2At - 1, bbY, 2, 11); }
         bbY -= 40; c.textAlign = 'left';
       }
@@ -773,6 +846,7 @@ RB.define('render', function (require) {
         c.fillStyle = '#7d7390'; c.font = '13px Georgia'; c.textAlign = 'right';
         c.fillText(fmtTime(Game.fightTime), this.W - this.hudInset(), 34); c.textAlign = 'left';
       }
+      if (Game.mode === 'tutorial') this.drawTutorialHud();
       c.restore();
     }
   };

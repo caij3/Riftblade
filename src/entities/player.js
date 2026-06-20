@@ -211,7 +211,10 @@ RB.define('player', function (require) {
       audio().sfx('playerhit'); world().addShake(0.45);
       world().dmgNum(this.x, this.z, 1.6, amount, 'player');
       world().spark(this.x, this.z, 1, '#b8333f', 10, 6);
-      if (this.hp <= 0) { this.hp = 0; this.dead = true; game().onPlayerDeath(); }
+      if (this.hp <= 0) {
+        if (game().mode === 'tutorial') { this.hp = 1; }   // training can't kill — chip and retry
+        else { this.hp = 0; this.dead = true; game().onPlayerDeath(); }
+      }
       return true;
     }
   };
