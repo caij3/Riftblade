@@ -126,8 +126,6 @@ RB.define('shepherd', function (require) {
         if (this.risenCountNear(P.x, P.z) === 0) opts.push({ id: 'N2', ok: true }, { id: 'N2', ok: true });
         if (this.campT > A.N4.campTime) opts.push({ id: 'N4', ok: true });
         if (d > 3) opts.push({ id: 'N8', ok: true });
-        opts.push({ id: 'N1', ok: true });
-        if (d > 3) opts.push({ id: 'N1', ok: true });
       } else {
         if (this.sinceN7 > B.n7Interval) opts.push({ id: 'N7', ok: true });
         if (d < B.graveStepRange && !lastWasStep) opts.push({ id: 'N3', ok: true });
@@ -135,9 +133,8 @@ RB.define('shepherd', function (require) {
         if (this.risenCountNear(P.x, P.z) === 0) opts.push({ id: 'N6', ok: true });
         if (this.campT > A.N4.campTime) opts.push({ id: 'N4', ok: true });
         if (d > 3) opts.push({ id: 'N8', ok: true }, { id: 'N8', ok: true });
-        opts.push({ id: 'N1', ok: true });
-        if (d > 3) opts.push({ id: 'N1', ok: true });
       }
+      if (!opts.length) return 'N3';        // fallback (N1's old role): blink-and-volley out of a stuck close-range state
       return this.pickWeighted(opts);
     }
 
@@ -171,6 +168,12 @@ RB.define('shepherd', function (require) {
               this.sanctified = { x: Math.cos(ang0) * aR * 0.5, z: Math.sin(ang0) * aR * 0.5, r: A.N7.safeRadius };
               this.x = 0; this.z = 0; world().spark(this.x, this.z, 1.4, '#8fd9a0', 14, 6);
             }
+            if (id === 'N3') {                       // grave-step to a far anchor first, then telegraph the lance volley
+              const t = this.graveStepTarget();
+              this.x = t.x; this.z = t.z; world().clampPoint(this, this.radius);
+              this.facing = angTo(this.x, this.z, P.x, P.z);
+              world().spark(this.x, this.z, 1.4, '#8fd9a0', 16, 7); audio().sfx('gravestep');
+            }
             if (id === 'N5') {                       // grave-step next to the player, then telegraph the sweep (W2-style)
               const ang = angTo(P.x, P.z, this.x, this.z);
               this.x = P.x + Math.cos(ang) * 2.2; this.z = P.z + Math.sin(ang) * 2.2; world().clampPoint(this, this.radius);
@@ -183,7 +186,7 @@ RB.define('shepherd', function (require) {
         }
         case 'windup': {
           const w = A[this.attack].windup;
-          if (this.attack === 'N1' || this.attack === 'N5') this.faceP(2.0, dt);
+          if (this.attack === 'N3' || this.attack === 'N5') this.faceP(2.0, dt);
           if (this.stateT >= w) { this.state = 'strike'; this.stateT = 0; this.execute(); }
           break;
         }
@@ -199,16 +202,17 @@ RB.define('shepherd', function (require) {
       this.contactPush(dt);
     }
 
+    fireLanceVolley() {                                  // N1 is gone as a standalone attack; its config now only powers the N3 volley
+      const c = this.cfg.attacks.N1, P = require('player');
+      const base = angTo(this.x, this.z, P.x, P.z);
+      const n = this.phase === 1 ? c.countP1 : c.countP2;
+      const spd = c.speed * (this.fightT > this.cfg.enrageTime ? this.cfg.enrageLanceMult : 1);
+      for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * c.spread; proj().spawnLance(this.x, this.z, base + off, spd, c.radius, c.damage); }
+    }
+
     execute() {
       const A = this.cfg.attacks, P = require('player');
       switch (this.attack) {
-        case 'N1': {
-          const c = A.N1, base = angTo(this.x, this.z, P.x, P.z);
-          const n = this.phase === 1 ? c.countP1 : c.countP2;
-          const spd = c.speed * (this.fightT > this.cfg.enrageTime ? this.cfg.enrageLanceMult : 1);
-          for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * c.spread; proj().spawnLance(this.x, this.z, base + off, spd, c.radius, c.damage); }
-          break;
-        }
         case 'N2': case 'N6': {
           const R = this.cfg.risen, bloated = this.attack === 'N6';
           const atk = A[this.attack];
@@ -219,12 +223,7 @@ RB.define('shepherd', function (require) {
           audio().sfx('raise');
           break;
         }
-        case 'N3': {
-          const t = this.graveStepTarget();
-          this.x = t.x; this.z = t.z; world().clampPoint(this, this.radius);
-          world().spark(this.x, this.z, 1.4, '#8fd9a0', 16, 7); audio().sfx('gravestep');
-          break;
-        }
+        case 'N3': this.fireLanceVolley(); break;        // grave-step already happened at attack start; loose the volley from the new spot
         case 'N4': {
           this.rotZone(P.x, P.z, A.N4.radius, this.phase === 1 ? A.N4.dps : A.N4.dpsP2, A.N4.life, A.N4.delay);
           audio().sfx('rot');
@@ -243,9 +242,9 @@ RB.define('shepherd', function (require) {
           const centers = [{ x: 0, z: 0 }];
           for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; centers.push({ x: Math.cos(a) * aR * 0.62, z: Math.sin(a) * aR * 0.62 }); }
           for (const c of centers) if (clear(c)) this.rotZone(c.x, c.z, A.N7.radius, dps, A.N7.life, 0);
-          // raise the dead across the floor (not in the safe zone)
-          for (let i = 0; i < 4; i++) { const a = rand(0, TAU), rr = rand(aR * 0.3, aR * 0.85);
-            const x = Math.cos(a) * rr, z = Math.sin(a) * rr; if (clear({ x, z })) this.spawnRisenAt(x, z, false); }
+          // raise one BLOATED risen at every unsafe ring rot-circle (clear of the safe zone, skipping the arena centre); spawnRisenAt enforces maxAlive
+          const ringPts = centers.slice(1).filter(clear);
+          for (const c of ringPts) this.spawnRisenAt(c.x, c.z, true);
           this.coreExposed = false; this.sinceN7 = 0;
           audio().sfx('lastrite'); world().addShake(0.7);
           break;
@@ -253,7 +252,7 @@ RB.define('shepherd', function (require) {
         case 'N8': {                                     // necrotic line: originates at the boss, aims where it locked, arms after a beat
           const c = A.N8, ang = angTo(this.x, this.z, P.x, P.z);
           world().hazards.push({ type: 'rotline', x: this.x, z: this.z, ang, length: c.length, band: c.band,
-            t: 0, arm: c.arm, life: c.life, dps: c.dps, dmg: c.damage, hit: false });
+            t: 0, arm: c.arm, life: c.life, dps: c.dps, dmg: c.damage, detonated: false });
           audio().sfx('rot'); world().addShake(0.3);
           break;
         }

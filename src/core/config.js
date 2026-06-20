@@ -39,14 +39,14 @@ RB.define('config', function () {
       riftstrikeNoStagger: true,
       behavior: { approachDist: 3.2, glueBuildRange: 5.5, glueDecayMult: 2.0, w3GlueThreshold: 1.2, w7GlueThreshold: 1.2, w7Chance: 0.30 },
       attacks: {
-        W1: { windup: 0.8, damage: 18, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
-        W2: { windup: 0.7, damage: 20, range: 4.5, arc: Math.PI, recovery: 1.0 },
-        W3: { windup: 1.0, damage: 30, burn: 5, burnInterval: 1.0, rMin: 1.0, rMax: 10.0, expandTime: 1.2, band: 1.0, lingerTime: 5.0},
+        W1: { windup: 0.8, damage: 22, range: 3.0, arc: 1.4, shock: 3.0, recovery: 1.5 },
+        W2: { windup: 0.7, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0 },
+        W3: { windup: 1.0, damage: 35, burn: 5, burnInterval: 1.0, rMin: 1.0, rMax: 10.0, expandTime: 1.2, band: 1.0, lingerTime: 5.0},
         W4: { windup: 0.5, damage: 15, hop: 6.0, projSpeed: 20.0, projRadius: 0.5, splash: 1.4,
               countP1: 5, countP2: 7, spread: 0.42, curveRate: 1.4, life: 2.0 },
-        W5: { windup: 0.6, damage: 20, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 3.0, trailDps: 5 },
-        W6: { windup: 0.7, damage: 18, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.55, recovery: 2.0, trackSpeed: 7.5 },
-        W7: { windup: 1.2, damage: 60, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0}
+        W5: { windup: 0.6, damage: 25, range: 4.5, arc: Math.PI, recovery: 1.0, trailLife: 3.0, trailDps: 5 },
+        W6: { windup: 0.7, damage: 22, range: 3.0, arc: 1.4, shock: 3.0, slams: 3, gap: 0.55, recovery: 2.0, trackSpeed: 7.5 },
+        W7: { windup: 1.2, damage: 65, safeCircles: 3, safeRadius: 2.5, recovery: 1.6, coreExpose: 3.0}
       },
       coreRiftstrikeMult: 1.5,
       arena: { type: 'circle', radius: 15, braziers: 4, brazierRadius: 0.8 }
@@ -83,20 +83,20 @@ RB.define('config', function () {
       riftstrikeNoStagger: true,      // Boss-3 exception: pinned, not staggered (R-NEC-06)
       behavior: { approachDist: 6.0, graveStepRange: 3.5, n5Range: 4, n7Interval: 10.0 },
       risen: {
-        hp: 24, hpBloated: 24, killStamina: 0, speed: 3.0, maxAlive: 4,
+        hp: 24, hpBloated: 24, killStamina: 0, speed: 3.0, maxAlive: 5,
         burstTelegraph: 0.5, burstRadius: 3.0, burstDamage: 18,
         spawnRadius: 1.8, spawnDelay: 0.4, spawnDamage: 12,
         melee: { windup: 0.6, hits: 1, damage: 12, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6 }
       },
       attacks: {
-        N1: { windup: 0.7, damage: 14, speed: 24.0, radius: 0.35, spread: 0.18, countP1: 1, countP2: 3, recovery: 0.5 },
+        N1: { windup: 0.7, damage: 14, speed: 24.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
         N2: { windup: 0.9, spawnDelay: 0.4, recovery: 0.8 },
         N3: { windup: 0.5, recovery: 0.5 },
         N4: { windup: 1.2, radius: 4.0, campTime: 2.0, delay: 0.1, expandTime: 1.0, life: 6.0, dps: 6, dpsP2: 8, recovery: 1.0 },
         N5: { windup: 0.6, range: 4.0, arc: Math.PI, damage: 22, recovery: 1.0 },
         N6: { windup: 0.9, recovery: 0.8 },
-        N7: { windup: 2.0, radius: 5.0, safeRadius: 4.5, life: 6.0, recovery: 4.0 },
-        N8: { windup: 0.8, arm: 0.4, damage: 20, band: 2.0, length: 20.0, life: 5.0, dps: 8, recovery: 1.0 }
+        N7: { windup: 2.0, radius: 5.0, safeRadius: 4.5, life: 6.0, recovery: 3.5 },
+        N8: { windup: 0.8, arm: 0.4, damage: 20, band: 2.0, length: 20.0, life: 10.0, dps: 8, recovery: 1.0 }
       },
       arena: { type: 'circle', radius: 14, graves: 30,
         // invisible anchor points the Shepherd Grave-Steps between and seeds Risen on

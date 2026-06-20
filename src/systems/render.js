@@ -609,7 +609,7 @@ RB.define('render', function (require) {
             this.groundArc(b.x, b.z, 3, angTo(b.x, b.z, Player.x, Player.z), 0.5, null, 'rgba(255,196,107,.7)');
           }
         } else if (b.kind === 'shepherd') {
-          if (a === 'N1') {
+          if (a === 'N3') {                              // lance-volley aim arc — the grave-step combo's windup telegraph
             this.groundArc(b.x, b.z, 3, angTo(b.x, b.z, Player.x, Player.z), 0.3, null, 'rgba(143,217,160,.75)');
           } else if (a === 'N4') {
             this.groundDisc(Player.x, Player.z, A.N4.radius, `rgba(74,120,70,${0.12 + 0.24 * prog(A.N4)})`, 'rgba(143,217,160,.85)', 2, cb);

@@ -112,9 +112,14 @@ RB.define('projectiles', function (require) {
           const grow = clamp((hz.t - d) / hz.expandTime, 0, 1);
           hz.cur = Math.max(0, (hz.r - hz.rim) * grow);   // current dangerous radius (0 during the delay; cached for render)
           hz.armed = armed;
-          if (armed && dist(hz.x, hz.z, Player.x, Player.z) < hz.cur + Player.radius) {
-            hz.tick = (hz.tick || 0) - dt;
+          const inDisc = armed && dist(hz.x, hz.z, Player.x, Player.z) < hz.cur + Player.radius;
+          if (inDisc) {                                   // contact always bites, then ticks while you stay — can't be out-run, and catches you if the disc expands onto you
+            if (!hz.wasIn) hz.tick = 0;                   // fresh entry forces an immediate tick so a fast pass-through still takes a hit
+            hz.tick -= dt;
             if (hz.tick <= 0) { Player.takeDamage(hz.dps * 0.5, 'rot'); hz.tick = 0.5; } // hz.dps per second
+            hz.wasIn = true;
+          } else {
+            hz.wasIn = false;                             // out of the disc — the next entry counts as fresh contact
           }
           if (hz.t >= d + hz.life) W.hazards.splice(i, 1);
           break;
@@ -127,17 +132,24 @@ RB.define('projectiles', function (require) {
           if (hz.t >= hz.telegraph + 0.4) W.hazards.splice(i, 1);
           break;
         }
-        case 'rotline': {                            // necrotic line from the boss; arms after a beat, then bites + DoT
+        case 'rotline': {                            // necrotic line from the boss; arms after a beat, detonates once, then lingers as DoT
           const dx = Math.cos(hz.ang), dz = Math.sin(hz.ang);
           let proj = (Player.x - hz.x) * dx + (Player.z - hz.z) * dz;
           proj = clamp(proj, 0, hz.length);                  // segment runs FROM the boss outward (one-sided)
           const perp = dist(Player.x, Player.z, hz.x + dx * proj, hz.z + dz * proj);
           const armed = hz.t >= (hz.arm || 0);
-          if (armed && perp < hz.band / 2 + Player.radius) {
-            if (!hz.hit) { Player.takeDamage(hz.dmg, 'rot'); hz.hit = true; }   // initial bite, once armed
-            hz.tick = (hz.tick || 0) - dt;
+          const inBand = perp < hz.band / 2 + Player.radius;
+          if (armed && !hz.detonated) {                      // big hit fires once, the instant it arms — only catches whoever's in it on spawn
+            if (inBand) Player.takeDamage(hz.dmg, 'rot');
+            hz.detonated = true; hz.tick = 0.5; hz.wasIn = inBand;
+          } else if (armed && inBand) {                      // lingering rot: contact always bites, then ticks while you stay — can't be out-run
+            if (!hz.wasIn) hz.tick = 0;                       // fresh entry forces an immediate tick so a fast pass-through still takes a hit
+            hz.tick -= dt;
             if (hz.tick <= 0) { Player.takeDamage(hz.dps * 0.5, 'rot'); hz.tick = 0.5; }
-          } else if (!armed || perp >= hz.band / 2 + Player.radius) { hz.hit = false; }
+            hz.wasIn = true;
+          } else if (armed) {
+            hz.wasIn = false;                                 // out of the band — the next entry counts as fresh contact
+          }
           if (hz.t >= hz.life + (hz.arm || 0)) W.hazards.splice(i, 1);
           break;
         }
