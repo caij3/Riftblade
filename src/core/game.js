@@ -110,7 +110,6 @@ RB.define('game', function (require) {
     startEncounter(id) {
       const enc = encOf(id);
       this.currentEncounter = id;
-      Save.bossesSeen[id] = true;                     // faced once -> unlocked in the Boss Dictionary
       this.mode = 'fight'; this.fightTime = 0;
       this.arenaTheme = enc.theme;
       ui().hideAll(); ui().el('objectives').classList.remove('show');
