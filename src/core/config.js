@@ -110,7 +110,7 @@ RB.define('config', function () {
       }
     },
     sovereign: {
-      name: 'THE IRON SOVEREIGN, CROWN OF THE BROKEN MARCH', hp: 800, phase2At: 0.6,
+      name: 'THE IRON SOVEREIGN, CROWN OF THE BROKEN MARCH', hp: 800, phase2At: 0.5,
       moveSpeed: [0, 5.0],            // P1 stationary on the dais; P2 he rises and hunts
       contactPush: 9, radius: 1.2, height: 3.4,
       stagger: { window: 3.0, threshold: 85, duration: 0.8, immunity: 10.0 },
@@ -136,14 +136,14 @@ RB.define('config', function () {
         K2: { windup: 0.9, count: 7, gap: 2, spacing: 1.7, recovery: 1.0 }, // Phalanx (contiguous wall, one real gap to run to)
         K3: { windup: 1.0, ring: 6, gap: 2, gapP2: 1, ringR: 6.5, recovery: 1.3 },// Encirclement (charge inward, safe wedge)
         K4: { windup: 0.55, lunges: 3, lungeGap: 0.42, lungeTele: 0.5, lungeLen: 10.0,   // Vanguard Press (both phases): lunges then a jump-slam
-              lungeDist: 9.0, lungeDamage: 14, finisherTele: 0.55, jumpRadius: 3.0, jumpDamage: 24,
+              lungeDist: 9.0, lungeDamage: 18, finisherTele: 0.55, jumpRadius: 3.0, jumpDamage: 24,
               campTime: 2.2, recovery: 1.8 },
         K5: { windup: 0.85, damage: 26, range: 4.6, arc: Math.PI, recovery: 1.4,    // Royal Cleaver: P1 a sweep; P2 a sweep then a C5-style leap that moves the king
               finisher: 30, finisherRadius: 3.2, finisherTele: 0.5, leapTime: 0.45, leapHeight: 2.4 },
         K6: { windup: 0.9, count: 2, countP2: 3, volley: 4, boltSpeed: 22, boltRadius: 0.32,
               boltDamage: 12, spread: 0.16, gap: 0.12, aimTele: 0.45, recovery: 1.0 }, // Crossbow Rank: aim-line telegraph, then leading volleys
         K7: { windup: 1.1, pulses: 5, ringCount: 16,                                // Coronation March (P2): rings collapse wall→centre, NO safe spot
-              startR: 2.0, endR: 14.5, slamRadius: 3.0, slamDamage: 20,
+              startR: 2.0, endR: 14.5, slamRadius: 3.0, slamDamage: 24,
               pulseGap: 0.5, recovery: 2.5 }
       },
       arena: { type: 'circle', radius: 15, banners: 8,
