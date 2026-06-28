@@ -66,7 +66,7 @@ RB.define('config', function () {
         C4: { windup: 0.8, damage: 18, radius: 6.0, hits: 2, gap: 0.3, recovery: 1.4},
         C5: { windup: 0.5, hits: 5, damage: 18, gap: 0.4, step: 5.0, range: 2.4, arc: 1.6,
               finisher: 28, finisherTele: 0.0, leap: 5.0, finisherRadius: 3.0, recovery: 1.2 },
-        C6: { windup: 0.3, rMin: 3, rMax: 13, growTime: 1.0, dps: 70, recovery: 0.8}
+        C6: { windup: 1.0, rMin: 3, rMax: 15, growTime: 1.0, dps: 70, recovery: 0.8}
       },
       echo: { hp: 80, damageMult: 0.5, killStamina: 0, count: 2, speed: 5.0 },
       behavior: { c4GlueTime: 1.2, glueBuildRange: 4, glueDecayMult: 2.0, c3Interval: 12.0, c3DamageTrigger: 100, c3DamageWindow: 4.0 },
