@@ -22,7 +22,18 @@ RB.define('projectiles', function (require) {
     world().projectiles.push({ type: 'lance', x, z, h: 1.4, ang, speed, r: radius, dmg, life: 5 });
     audio().sfx('lance');
   }
-  const projColor = t => t === 'shard' ? '#cfd5ef' : t === 'lance' ? '#cfe8d0' : '#ff7a2f';
+  function spawnBolt(x, z, ang, speed, radius, dmg, delay = 0) {
+    // crossbow bolt: straight, fast, with an optional fuse so it telegraphs (and a volley staggers) out of one rank
+    world().projectiles.push({ type: 'bolt', x, z, h: 1.3, ang, speed, r: radius, dmg, life: 5, delay, delay0: delay });
+  }
+  const projColor = t => t === 'shard' ? '#cfd5ef' : t === 'lance' ? '#cfe8d0' : t === 'bolt' ? '#e7cf86' : '#ff7a2f';
+  // perpendicular distance from a point to a knight's charge lane (segment from origin along ang)
+  function lanePerp(hz, px, pz) {
+    const dx = Math.cos(hz.ang), dz = Math.sin(hz.ang);
+    let t = (px - hz.x) * dx + (pz - hz.z) * dz;
+    t = clamp(t, 0, hz.laneLength);
+    return dist(px, pz, hz.x + dx * t, hz.z + dz * t);
+  }
   function updateProjectiles(dt) {
     const W = world(), Player = player();
     for (let i = W.projectiles.length - 1; i >= 0; i--) {
@@ -39,6 +50,10 @@ RB.define('projectiles', function (require) {
         p.x += Math.cos(p.ang) * p.speed * dt; p.z += Math.sin(p.ang) * p.speed * dt;
       }
       else if (p.type === 'lance') {            // fast, straight bone bolt
+        p.x += Math.cos(p.ang) * p.speed * dt; p.z += Math.sin(p.ang) * p.speed * dt;
+      }
+      else if (p.type === 'bolt') {             // crossbow bolt: waits out its fuse at the rank, then flies straight
+        if (p.delay > 0) { p.delay -= dt; p.life += dt; continue; }   // hold position + don't age while fused
         p.x += Math.cos(p.ang) * p.speed * dt; p.z += Math.sin(p.ang) * p.speed * dt;
       }
       let kill = p.life <= 0;
@@ -162,8 +177,42 @@ RB.define('projectiles', function (require) {
           if (hz.t >= hz.telegraph + 0.3) W.hazards.splice(i, 1);
           break;
         }
+        case 'knight': {                             // Sovereign: a phantom knight — pure attack animation, never an entity
+          if (hz.mode === 'charge') {
+            const armed = hz.t >= hz.muster;
+            if (armed) {
+              const ct = clamp((hz.t - hz.muster) / hz.chargeTime, 0, 1);  // 0..1 along the lane
+              const front = hz.speed * (hz.t - hz.muster);                 // distance the phantom has advanced
+              const fx = hz.x + Math.cos(hz.ang) * Math.min(front, hz.laneLength);
+              const fz = hz.z + Math.sin(hz.ang) * Math.min(front, hz.laneLength);
+              hz.fx = fx; hz.fz = fz; hz.ct = ct;                          // cache for render
+              if (!hz.struck && dist(fx, fz, Player.x, Player.z) < hz.laneBand / 2 + Player.radius) {
+                if (Player.takeDamage(hz.dmg, 'knight')) { hz.struck = true; W.spark(fx, fz, 1.3, hz.banner, 10, 6); }
+              }
+              // P2 linger: once the charge has fully passed, leave a brief scorch in the lane
+              if (ct >= 1 && hz.linger > 0) {
+                const onLane = lanePerp(hz, Player.x, Player.z) < hz.laneBand / 2 + Player.radius;
+                if (onLane) {
+                  if (!hz.wasIn) hz.tick = 0;
+                  hz.tick -= dt;
+                  if (hz.tick <= 0) { Player.takeDamage(hz.linger * 0.5, 'rot'); hz.tick = 0.5; }
+                  hz.wasIn = true;
+                } else hz.wasIn = false;
+              }
+            }
+            const total = hz.muster + hz.chargeTime + (hz.linger > 0 ? hz.lingerLife : 0.15);
+            if (hz.t >= total) W.hazards.splice(i, 1);
+          } else {                                    // slam: a stationary disc that detonates once
+            if (!hz.struck && hz.t >= hz.muster) {
+              if (dist(hz.x, hz.z, Player.x, Player.z) < hz.radius + Player.radius) Player.takeDamage(hz.dmg, 'knight');
+              hz.struck = true; audio().sfx('slam'); W.addShake(0.3); W.spark(hz.x, hz.z, 1.2, hz.banner, 10, 6);
+            }
+            if (hz.t >= hz.muster + 0.35) W.hazards.splice(i, 1);
+          }
+          break;
+        }
       }
     }
   }
-  return { spawnCoal, spawnShard, spawnLance, updateProjectiles, updateHazards };
+  return { spawnCoal, spawnShard, spawnLance, spawnBolt, updateProjectiles, updateHazards };
 });

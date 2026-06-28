@@ -81,7 +81,7 @@ RB.define('config', function () {
       enrageTime: 420, enrageLanceMult: 1.5,
       coreRiftstrikeMult: 1.5,        // N7-interrupt Riftstrike (coreExposed) deals 2x
       riftstrikeNoStagger: true,      // Boss-3 exception: pinned, not staggered (R-NEC-06)
-      behavior: { approachDist: 6.0, graveStepRange: 3.5, n5Range: 4, n7Interval: 10.0 },
+      behavior: { approachDist: 6.0, graveStepRange: 3.5, n5Range: 4, n7Interval: 12.0 },
       risen: {
         hp: 24, hpBloated: 24, killStamina: 0, speed: 3.0, maxAlive: 5,
         burstTelegraph: 0.5, burstRadius: 3.0, burstDamage: 18,
@@ -89,13 +89,13 @@ RB.define('config', function () {
         melee: { windup: 0.6, hits: 1, damage: 12, gap: 0.4, step: 4.0, range: 2.4, arc: 1.6 }
       },
       attacks: {
-        N1: { windup: 0.7, damage: 14, speed: 24.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
+        N1: { windup: 0.7, damage: 18, speed: 24.0, radius: 0.35, spread: 0.18, countP1: 3, countP2: 5, recovery: 0.5 },
         N2: { windup: 0.9, spawnDelay: 0.4, recovery: 0.8 },
         N3: { windup: 0.5, recovery: 0.5 },
-        N4: { windup: 1.2, radius: 4.0, campTime: 2.0, delay: 0.1, expandTime: 1.0, life: 6.0, dps: 6, dpsP2: 8, recovery: 1.0 },
+        N4: { windup: 1.2, radius: 4.0, campTime: 2.0, delay: 0.1, expandTime: 1.0, life: 6.0, dps: 10, dpsP2: 12, recovery: 1.0 },
         N5: { windup: 0.6, range: 4.0, arc: Math.PI, damage: 22, recovery: 1.0 },
         N6: { windup: 0.9, recovery: 0.8 },
-        N7: { windup: 2.0, radius: 5.0, safeRadius: 4.5, life: 6.0, recovery: 3.5 },
+        N7: { windup: 2.0, radius: 5.0, safeRadius: 4.5, life: 6.0, recovery: 6.0 },
         N8: { windup: 0.8, arm: 0.4, damage: 20, band: 2.0, length: 20.0, life: 10.0, dps: 8, recovery: 1.0 }
       },
       arena: { type: 'circle', radius: 14, graves: 30,
@@ -109,15 +109,58 @@ RB.define('config', function () {
         ]
       }
     },
+    sovereign: {
+      name: 'THE IRON SOVEREIGN, CROWN OF THE BROKEN MARCH', hp: 800, phase2At: 0.6,
+      moveSpeed: [0, 5.0],            // P1 stationary on the dais; P2 he rises and hunts
+      contactPush: 9, radius: 1.2, height: 3.4,
+      stagger: { window: 3.0, threshold: 85, duration: 0.8, immunity: 10.0 },
+      idle: [1.0, 1.5],
+      transitionTime: 1.0,
+      enrageTime: 420, enrageKnightMult: 1.3,   // late-fight: faster knight charges
+      coreRiftstrikeMult: 1.5,
+      riftstrikeNoStagger: true,      // throne-bound; pinned, not staggered (mirrors Shepherd R-NEC-06)
+      behavior: { approachDist: 99, reclaimRange: 9.0, k7Interval: 14.0,
+                  huntRange: 3.5,     // P2: how close the risen king closes before issuing his next command
+                  dualChance: 1.00 }, // P2: chance any command is issued together with a second one
+      knights: {                      // shared phantom-knight tuning (NOT an entity — pure strike data)
+        muster: 0.6,                 // telegraph hold from spawn to charge
+        chargeTime: 0.38,             // travel time of the charge lunge along its lane
+        laneLength: 30.0, laneBand: 1.7,
+        strikeDamage: 20,
+        chargeSpeed: 26.0,            // visual + hit speed of the phantom down its lane
+        musterDist: 11.0,             // how far from the player the charging knights blink in
+        lead: 0.22,                   // seconds of player-velocity leading on aimed charges (0 = aim at current spot)
+        banner: '#c9a23b'             // gold telegraph / phantom color
+      },
+      attacks: {
+        K2: { windup: 0.9, count: 7, gap: 2, spacing: 1.7, recovery: 1.0 }, // Phalanx (contiguous wall, one real gap to run to)
+        K3: { windup: 1.0, ring: 6, gap: 2, gapP2: 1, ringR: 6.5, recovery: 1.3 },// Encirclement (charge inward, safe wedge)
+        K4: { windup: 0.55, lunges: 3, lungeGap: 0.42, lungeTele: 0.5, lungeLen: 10.0,   // Vanguard Press (both phases): lunges then a jump-slam
+              lungeDist: 9.0, lungeDamage: 14, finisherTele: 0.55, jumpRadius: 3.0, jumpDamage: 24,
+              campTime: 2.2, recovery: 1.8 },
+        K5: { windup: 0.85, damage: 26, range: 4.6, arc: Math.PI, recovery: 1.4,    // Royal Cleaver: P1 a sweep; P2 a sweep then a C5-style leap that moves the king
+              finisher: 30, finisherRadius: 3.2, finisherTele: 0.5, leapTime: 0.45, leapHeight: 2.4 },
+        K6: { windup: 0.9, count: 2, countP2: 3, volley: 4, boltSpeed: 22, boltRadius: 0.32,
+              boltDamage: 12, spread: 0.16, gap: 0.12, aimTele: 0.45, recovery: 1.0 }, // Crossbow Rank: aim-line telegraph, then leading volleys
+        K7: { windup: 1.1, pulses: 5, ringCount: 16,                                // Coronation March (P2): rings collapse wall→centre, NO safe spot
+              startR: 2.0, endR: 14.5, slamRadius: 3.0, slamDamage: 20,
+              pulseGap: 0.5, recovery: 2.5 }
+      },
+      arena: { type: 'circle', radius: 15, banners: 8,
+        throne: { x: 0, z: -11.5, r: 1.7 },
+        musterRing: 12.5 }
+    },
     encounters: {
-      campaign: ['warden',  'shepherd', 'choir'],
+      campaign: ['warden', 'shepherd', 'choir', 'sovereign'],
       list: {
         warden: { label: 'Warden', theme: 'forge',  music: 'warden', spawn: [0, 10],
                   intro: 'THE CRUCIBLE WARDEN BARS THE GATE', victory: 'THE FURNACE GUTTERS' },
+        choir:  { label: 'Choir',  theme: 'chapel', music: 'choir',  spawn: [0, 7],
+                  intro: 'A HYMN RISES IN THE NAVE',          victory: 'THE CHOIR FALLS SILENT' },
         shepherd: { label: 'Shepherd', theme: 'ossuary', music: 'shepherd', spawn: [0, 10],
                   intro: 'OSSAREN HERDS THE DEAD',            victory: 'THE OSSUARY GOES STILL' },
-        choir:  { label: 'Choir',  theme: 'chapel', music: 'choir',  spawn: [0, 7],
-                  intro: 'A HYMN RISES IN THE NAVE',          victory: 'THE CHOIR FALLS SILENT' }
+        sovereign: { label: 'Sovereign', theme: 'throne', music: 'sovereign', spawn: [0, 9],
+                  intro: 'THE IRON SOVEREIGN DOES NOT RISE FROM HIS THRONE', victory: 'THE CROWN ROLLS FROM THE DAIS' }
       }
     },
     tutorial: { arena: { type: 'circle', radius: 12 }, dummyHp: 80 }

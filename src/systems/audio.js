@@ -87,6 +87,13 @@ RB.define('audio', function () {
         case 'rot': tone('sawtooth', 80, 45, 0.5, 0.4, 0.05); hiss(0.5, 0.32, 520, 180, 0.6); break;
         case 'censer': hiss(0.26, 0.6, 1400, 340, 1.5); tone('triangle', 320, 120, 0.2, 0.4); break;
         case 'lastrite': tone('sawtooth', 50, 150, 1.2, 0.7, 0.2); hiss(1.0, 0.4, 250, 1800, 1); break;
+        case 'decree': tone('sawtooth', 180, 240, 0.5, 0.4, 0.04); tone('triangle', 90, 120, 0.5, 0.35, 0.04); break;
+        case 'muster': tone('square', 160, 90, 0.22, 0.3); hiss(0.18, 0.35, 1400, 500, 1.5); break;
+        case 'charge': tone('sawtooth', 300, 520, 0.28, 0.4, 0.02); hiss(0.22, 0.4, 800, 2600, 2); break;
+        case 'cleaver': hiss(0.3, 0.7, 1200, 280, 1.4); tone('triangle', 260, 90, 0.24, 0.5); break;
+        case 'crossbow': tone('square', 720, 300, 0.1, 0.32); hiss(0.12, 0.35, 3000, 900, 2); break;
+        case 'coronation': tone('sawtooth', 70, 210, 1.3, 0.7, 0.2); tone('triangle', 220, 330, 1.0, 0.4, 0.1); hiss(1.0, 0.4, 300, 1600, 1); break;
+        case 'sovereigndie': tone('sawtooth', 260, 50, 1.4, 0.85, 0.05); tone('triangle', 130, 40, 1.4, 0.6, 0.05); hiss(0.4, 0.4, 900, 240, 1); break;
       }
     },
     stopMusic() { this.musicNodes.forEach(n => { try { n.stop ? n.stop() : n.disconnect(); } catch (e) {} }); this.musicNodes = []; },
@@ -112,6 +119,9 @@ RB.define('audio', function () {
       else if (theme === 'tutorial') { mk('sine', 65.4, 0.1); drone(130.8, 0.05); drone(196, 0.035); }
       else if (theme === 'shepherd') { mk('sine', 43.7, 0.12); drone(87.3, 0.06); drone(116.5, 0.05); drone(87.9, 0.05); drone(131, 0.035);
         const lfo = c.createOscillator(); lfo.frequency.value = 0.09; const lg = c.createGain(); lg.gain.value = 200;
+        lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); this.musicNodes.push(lfo, lg); }
+      else if (theme === 'sovereign') { mk('sine', 55, 0.13); drone(110, 0.06); drone(164.8, 0.05); drone(220, 0.035); drone(110.6, 0.05);
+        const lfo = c.createOscillator(); lfo.frequency.value = 0.16; const lg = c.createGain(); lg.gain.value = 320;
         lfo.connect(lg); lg.connect(lp.frequency); lfo.start(); this.musicNodes.push(lfo, lg); }
     }
   };

@@ -138,10 +138,12 @@ RB.define('render', function (require) {
       const c = this.ctx, a = world().arena; if (!a) return;
       const isForge = game().arenaTheme === 'forge';
       const isOssuary = game().arenaTheme === 'ossuary';
+      const isThrone = game().arenaTheme === 'throne';
       const bg = c.createLinearGradient(0, 0, 0, this.H);
       if (isForge) { bg.addColorStop(0, '#120c0e'); bg.addColorStop(1, '#1d1410'); }
       else if (game().arenaTheme === 'chapel') { bg.addColorStop(0, '#0d0d14'); bg.addColorStop(1, '#15141d'); }
       else if (isOssuary) { bg.addColorStop(0, '#0a0f0c'); bg.addColorStop(1, '#0e1512'); }
+      else if (isThrone) { bg.addColorStop(0, '#120f08'); bg.addColorStop(1, '#1a160d'); }
       else { bg.addColorStop(0, '#0c0e12'); bg.addColorStop(1, '#13161c'); }
       c.fillStyle = bg; c.fillRect(0, 0, this.W, this.H);
       c.save();
@@ -150,9 +152,10 @@ RB.define('render', function (require) {
         const g = c.createRadialGradient(0, 0, a.radius * this.S * 0.2, 0, 0, a.radius * this.S);
         if (isForge) { g.addColorStop(0, '#2a211c'); g.addColorStop(1, '#1a120e'); }
         else if (isOssuary) { g.addColorStop(0, '#1c2620'); g.addColorStop(1, '#0c120e'); }
+        else if (isThrone) { g.addColorStop(0, '#2a2418'); g.addColorStop(1, '#16120a'); }
         else { g.addColorStop(0, '#23242c'); g.addColorStop(1, '#15161c'); }
         c.beginPath(); c.arc(0, 0, a.radius * this.S, 0, TAU); c.fillStyle = g; c.fill();
-        c.strokeStyle = isForge ? 'rgba(255,122,47,.35)' : isOssuary ? 'rgba(143,217,160,.22)' : 'rgba(70,224,200,.25)'; c.lineWidth = 3; c.stroke();
+        c.strokeStyle = isForge ? 'rgba(255,122,47,.35)' : isOssuary ? 'rgba(143,217,160,.22)' : isThrone ? 'rgba(201,162,59,.30)' : 'rgba(70,224,200,.25)'; c.lineWidth = 3; c.stroke();
         c.strokeStyle = 'rgba(255,255,255,.04)';
         for (let r = 4; r < a.radius; r += 4) { c.beginPath(); c.arc(0, 0, r * this.S, 0, TAU); c.lineWidth = 1; c.stroke(); }
       } else {
@@ -267,6 +270,7 @@ RB.define('render', function (require) {
       else if (b.kind === 'dummy') this.drawDummy(b);
       else if (b.kind === 'shepherd') this.drawShepherd(b);
       else if (b.kind === 'risen') this.drawRisen(b);
+      else if (b.kind === 'sovereign') this.drawSovereign(b);
     },
     drawWarden(b) {
       const c = this.ctx; this.shadow(b.x, b.z, b.radius * 0.95);
@@ -452,10 +456,111 @@ RB.define('render', function (require) {
       }
       c.restore();
     },
+    drawSovereign(b) {
+      const c = this.ctx; this.shadow(b.x, b.z, b.radius);
+      const x = this.sx(b.x), y = this.sy(b.z, b.leapH || 0);
+      const H = b.height * this.S * 0.92;
+      const dir = Math.cos(b.facing) >= 0 ? 1 : -1;
+      const sway = Math.sin(b.animT * 1.1) * 1.5;
+      const gold = b.flash > 0 ? '#ffffff' : '#c9a23b';
+      const decree = (b.state === 'windup' && b.cfg.attacks[b.attack]) ? clamp(b.stateT / b.cfg.attacks[b.attack].windup, 0, 1) : 0;
+      c.save(); c.translate(x, y);
+      // throne backing (a heavy seat behind the king) — only while he still holds the dais (P1)
+      if (!b.risen) {
+        c.fillStyle = b.flash > 0 ? '#5a4a2c' : '#2a2419';
+        c.fillRect(-20, -H * 1.12, 40, H * 0.5);
+        c.fillStyle = '#1d1812'; c.fillRect(-20, -H * 1.12, 40, 8);
+        c.strokeStyle = 'rgba(201,162,59,.5)'; c.lineWidth = 2; c.strokeRect(-20, -H * 1.12, 40, H * 0.5);
+      }
+      // armored body (broad, regal block)
+      const body = b.flash > 0 ? '#ffffff' : '#2f2a32';
+      c.fillStyle = body;
+      c.beginPath();
+      c.moveTo(-16, 0); c.lineTo(-18, -H * 0.55); c.lineTo(-10 + sway, -H * 0.86);
+      c.lineTo(10 + sway, -H * 0.86); c.lineTo(18, -H * 0.55); c.lineTo(16, 0); c.closePath(); c.fill();
+      // pauldrons
+      c.fillStyle = b.flash > 0 ? '#fff' : '#3a3440';
+      c.beginPath(); c.arc(-18 + sway, -H * 0.82, 8, 0, TAU); c.arc(18 + sway, -H * 0.82, 8, 0, TAU); c.fill();
+      // gilded trim down the chest
+      c.strokeStyle = gold; c.lineWidth = 2; c.shadowColor = '#c9a23b'; c.shadowBlur = 6;
+      c.beginPath(); c.moveTo(sway, -H * 0.82); c.lineTo(0, -H * 0.2); c.stroke();
+      c.shadowBlur = 0;
+      // head + crown
+      c.fillStyle = b.flash > 0 ? '#fff' : '#241f27';
+      c.beginPath(); c.arc(sway, -H * 0.94, 9, 0, TAU); c.fill();
+      c.fillStyle = gold; c.shadowColor = '#c9a23b'; c.shadowBlur = 8;
+      c.beginPath();
+      const cy = -H * 1.04;
+      c.moveTo(sway - 11, cy + 6);
+      for (let i = 0; i <= 4; i++) { const px = sway - 11 + i * 5.5; const spike = (i % 2 === 0) ? -8 : -2; c.lineTo(px, cy + spike); }
+      c.lineTo(sway + 11, cy + 6); c.closePath(); c.fill();
+      c.shadowBlur = 0;
+      // eyes
+      c.fillStyle = '#e7cf86';
+      c.beginPath(); c.arc(sway - 3, -H * 0.95, 1.3, 0, TAU); c.arc(sway + 3, -H * 0.95, 1.3, 0, TAU); c.fill();
+      // commanding gesture: raises scepter/greatsword on windup; K5 is a full body cleave
+      const isCleave = (b.state === 'strike' && b.attack === 'K5');
+      const raise = b.attack === 'K5' ? -10 + decree * -22 : -26 * decree;
+      c.save(); c.translate(22 * dir, -H * 0.6);
+      c.rotate(dir * (isCleave ? 0.8 : (raise / 40) - 0.2));
+      c.strokeStyle = '#4a4030'; c.lineWidth = 4; c.beginPath(); c.moveTo(0, 14); c.lineTo(0, -30); c.stroke();
+      c.strokeStyle = gold; c.lineWidth = 3; c.shadowColor = '#c9a23b'; c.shadowBlur = isCleave ? 12 : 6;
+      c.beginPath(); c.moveTo(0, -10); c.lineTo(0, -38); c.stroke();
+      c.fillStyle = gold; c.beginPath(); c.arc(0, -38, 3.4, 0, TAU); c.fill();
+      c.shadowBlur = 0; c.restore();
+      if (b.coreExposed) {        // Coronation channel: exposed crown-core for the 2x interrupt
+        const pul = 5 + Math.sin(b.animT * 8) * 2;
+        const g = c.createRadialGradient(sway, -H * 0.6, 2, sway, -H * 0.6, 15 + pul);
+        g.addColorStop(0, '#fff3d0'); g.addColorStop(.4, '#e7cf86'); g.addColorStop(1, 'rgba(201,162,59,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(sway, -H * 0.6, 15 + pul, 0, TAU); c.fill();
+      }
+      c.restore();
+    },
+    // a translucent gold phantom-knight figure (NOT an entity — drawn purely from hazard data)
+    drawPhantomKnight(wx, wz, facing, alpha, charging) {
+      const c = this.ctx; const x = this.sx(wx), y = this.sy(wz);
+      const H = 2.3 * this.S * 0.92;
+      const dir = Math.cos(facing) >= 0 ? 1 : -1;
+      const lunge = charging ? 4 : 0;
+      c.save(); c.translate(x, y); c.globalAlpha = alpha;
+      c.save(); c.scale(1, 0.62); c.beginPath(); c.arc(0, 0, 0.5 * this.S, 0, TAU); c.fillStyle = 'rgba(0,0,0,.22)'; c.fill(); c.restore();
+      const gold = '#c9a23b', glow = '#e7cf86';
+      c.fillStyle = 'rgba(201,162,59,0.30)';
+      c.beginPath();
+      c.moveTo(-7, 0); c.lineTo(-8, -H * 0.5); c.lineTo(-4 + lunge, -H * 0.74);
+      c.lineTo(4 + lunge, -H * 0.74); c.lineTo(8, -H * 0.5); c.lineTo(7, 0); c.closePath(); c.fill();
+      c.strokeStyle = gold; c.lineWidth = 1.6; c.shadowColor = gold; c.shadowBlur = 6; c.stroke();
+      c.fillStyle = 'rgba(231,207,134,0.5)';
+      c.beginPath(); c.arc(0, -H * 0.8, 5, 0, TAU); c.fill();
+      c.strokeStyle = glow; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(0, -H * 0.55); c.lineTo(dir * 20, -H * 0.55 - 2); c.stroke();
+      c.shadowBlur = 0; c.restore();
+    },
     drawGrave(e) {
       const c = this.ctx; this.shadow(e.x, e.z, 0.42 * e.s);
       const h = this.S * e.s, stone = '#3a3e39', stoneL = '#4c514a', moss = 'rgba(96,140,96,.22)';
       c.save(); c.translate(this.sx(e.x), this.sy(e.z)); c.rotate(e.tilt);
+      if (e.gkind === 'banner') {
+        const w = h * 0.7, ht = h * 2.6;
+        // pole
+        c.strokeStyle = '#2a2419'; c.lineWidth = Math.max(2, h * 0.1);
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -ht); c.stroke();
+        // hanging cloth with a slow furl
+        const furl = Math.sin(game().simTime * 1.3 + e.x) * w * 0.12;
+        c.fillStyle = 'rgba(120,30,34,0.85)';
+        c.beginPath();
+        c.moveTo(-w / 2, -ht * 0.96);
+        c.lineTo(w / 2, -ht * 0.96);
+        c.lineTo(w / 2 + furl, -ht * 0.3);
+        c.lineTo(0, -ht * 0.16);
+        c.lineTo(-w / 2 + furl, -ht * 0.3);
+        c.closePath(); c.fill();
+        // gilded emblem
+        c.fillStyle = '#c9a23b';
+        c.beginPath(); c.arc(0, -ht * 0.62, w * 0.2, 0, TAU); c.fill();
+        c.restore();
+        return;
+      }
       if (e.gkind === 'head') {
         const w = h * 0.52, ht = h * 1.05;
         c.fillStyle = stone; c.beginPath();
@@ -550,7 +655,58 @@ RB.define('render', function (require) {
             c.beginPath(); c.moveTo(x1, z1); c.lineTo(x2, z2); c.stroke();
           }
           c.restore();
+        } else if (h.type === 'knight') {
+          const cc = this.ctx;
+          if (h.mode === 'charge') {
+            const dx = Math.cos(h.ang), dz = Math.sin(h.ang), L = h.laneLength;
+            const armed = h.t >= h.muster;
+            const x1 = h.x, z1 = h.z, x2 = h.x + dx * L, z2 = h.z + dz * L;
+            cc.save(); cc.translate(this.sx(0), this.sy(0)); cc.scale(1, 0.62); cc.lineCap = 'round';
+            const sx1 = x1 * this.S, sz1 = z1 * this.S, sx2 = x2 * this.S, sz2 = z2 * this.S;
+            if (!armed) {                                  // muster: gold "a knight will charge here" lane
+              const p = clamp(h.t / h.muster, 0, 1);
+              cc.strokeStyle = `rgba(201,162,59,${0.10 + 0.22 * p})`; cc.lineWidth = h.laneBand * this.S;
+              cc.beginPath(); cc.moveTo(sx1, sz1); cc.lineTo(sx2, sz2); cc.stroke();
+              cc.strokeStyle = `rgba(231,207,134,${0.4 + 0.5 * p})`; cc.lineWidth = 2 + Math.sin(game().simTime * 8) * 0.6;
+              cc.beginPath(); cc.moveTo(sx1, sz1); cc.lineTo(sx2, sz2); cc.stroke();
+            } else {                                       // charging: bright swept band that fades after the pass
+              const ct = clamp(h.ct || 0, 0, 1);
+              const fade = ct >= 1 ? clamp(1 - (h.t - h.muster - h.chargeTime) / (h.lingerLife || 0.15), 0, 1) : 1;
+              cc.strokeStyle = `rgba(201,162,59,${0.30 * fade})`; cc.lineWidth = h.laneBand * this.S;
+              cc.beginPath(); cc.moveTo(sx1, sz1); cc.lineTo(sx2, sz2); cc.stroke();
+            }
+            cc.restore();
+            // the phantom itself, mid-charge
+            if (armed && (h.ct || 0) < 1.05 && h.fx !== undefined) this.drawPhantomKnight(h.fx, h.fz, h.ang, 0.9, true);
+          } else {                                         // slam: telegraphed disc, then a flash
+            if (h.t < h.muster) {
+              const p = clamp(h.t / h.muster, 0, 1);
+              this.groundDisc(h.x, h.z, h.radius, `rgba(201,162,59,${0.12 + 0.2 * p})`, 'rgba(231,207,134,.9)', 2, cb);
+              this.drawPhantomKnight(h.x, h.z, game().simTime, 0.5 + 0.4 * p, false);
+            } else {
+              const a = clamp(1 - (h.t - h.muster) / 0.35, 0, 1);
+              this.groundDisc(h.x, h.z, h.radius, `rgba(231,207,134,${a * 0.55})`, null, 0);
+            }
+          }
         }
+      }
+      // Sovereign K7 Coronation March: the slam-knight rings render themselves; we add only a faint
+      // gold wavefront circle at the current radius so the expanding shockwave reads clearly. No safe wedge.
+      for (const b of game().bosses) {
+        if (b.kind !== 'sovereign' || !b.coronation || !b.coronation.started) continue;
+        const C = b.coronation, cc = this.ctx;
+        if (C.curR != null) {
+          cc.save(); cc.translate(this.sx(C.cx), this.sy(C.cz)); cc.scale(1, 0.62);
+          cc.strokeStyle = 'rgba(201,162,59,.22)'; cc.lineWidth = 2;
+          cc.beginPath(); cc.arc(0, 0, (C.curR + 0.6) * this.S, 0, TAU); cc.stroke();
+          cc.restore();
+        }
+      }
+      // Sovereign K5 leap: while he winds up the jump, telegraph the crash on the player's current spot.
+      for (const b of game().bosses) {
+        if (b.kind !== 'sovereign' || !b.k5 || b.k5.phase !== 'tele') continue;
+        const c = b.cfg.attacks.K5, p = clamp(b.k5.t / c.finisherTele, 0, 1), P = player();
+        this.groundDisc(P.x, P.z, c.finisherRadius, `rgba(201,162,59,${0.10 + 0.22 * p})`, 'rgba(231,207,134,.9)', 2, game().settings.cbSafe);
       }
     },
     drawStrikeTelegraphs() {
@@ -660,6 +816,17 @@ RB.define('render', function (require) {
           } else if (a === 'C3') {
             this.groundDisc(b.x, b.z, 1.2, 'rgba(207,213,239,.2)', null, 0);
           }
+        } else if (b.kind === 'sovereign') {
+          // Most Sovereign attacks telegraph through their knight hazards (drawn in drawHazardsGround).
+          // The king's own cleaver (K5) needs its arc — shown whether it's the primary or the dual-cast partner.
+          if (a === 'K5' || b.attack2 === 'K5') {
+            const c = A.K5;
+            this.groundArc(b.x, b.z, c.range, b.facing, c.arc, `rgba(201,162,59,${pulse * prog(c)})`, 'rgba(231,207,134,.9)', cb);
+          }
+          if (a === 'K7') {
+            const a2 = world().arena;
+            this.groundDisc(0, 0, a2.radius, `rgba(150,120,40,${0.05 + 0.10 * prog(A.K7)})`, 'rgba(201,162,59,.45)', 1.5, cb);   // arena-wide coronation incoming
+          }
         }
       }
       for (const b of game().bosses) {
@@ -670,6 +837,16 @@ RB.define('render', function (require) {
     drawProjectiles() {
       const c = this.ctx;
       for (const p of world().projectiles) {
+        if (p.type === 'bolt' && p.delay > 0) {           // fused at the rank: show an aim-line telegraph, not yet in flight
+          const prog = p.delay0 > 0 ? clamp(1 - p.delay / p.delay0, 0, 1) : 1;
+          const len = 7.0, dx = Math.cos(p.ang), dz = Math.sin(p.ang);
+          const cc = this.ctx; cc.save(); cc.translate(this.sx(0), this.sy(0)); cc.scale(1, 0.62); cc.lineCap = 'round';
+          const x1 = p.x * this.S, z1 = p.z * this.S, x2 = (p.x + dx * len) * this.S, z2 = (p.z + dz * len) * this.S;
+          cc.strokeStyle = `rgba(201,162,59,${0.12 + 0.30 * prog})`; cc.lineWidth = 2 + 2 * prog;
+          cc.beginPath(); cc.moveTo(x1, z1); cc.lineTo(x2, z2); cc.stroke();
+          cc.restore();
+          continue;
+        }
         const x = this.sx(p.x), y = this.sy(p.z, p.h);
         this.shadow(p.x, p.z, 0.25);
         if (p.type === 'coal') {
@@ -681,6 +858,12 @@ RB.define('render', function (require) {
           c.shadowColor = '#8fd9a0'; c.shadowBlur = 9;
           c.strokeStyle = '#cfe8d0'; c.lineWidth = 3; c.beginPath(); c.moveTo(-12, 0); c.lineTo(10, 0); c.stroke();
           c.fillStyle = '#eafff0'; c.beginPath(); c.moveTo(16, 0); c.lineTo(8, -3); c.lineTo(8, 3); c.closePath(); c.fill();
+          c.shadowBlur = 0; c.restore();
+        } else if (p.type === 'bolt') {
+          c.save(); c.translate(x, y); c.rotate(p.ang);
+          c.shadowColor = '#c9a23b'; c.shadowBlur = 8;
+          c.strokeStyle = '#7a5e22'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-10, 0); c.lineTo(8, 0); c.stroke();
+          c.fillStyle = '#e7cf86'; c.beginPath(); c.moveTo(13, 0); c.lineTo(6, -2.6); c.lineTo(6, 2.6); c.closePath(); c.fill();
           c.shadowBlur = 0; c.restore();
         } else {
           c.save(); c.translate(x, y); c.rotate(p.ang);
@@ -820,7 +1003,7 @@ RB.define('render', function (require) {
         c.fillText(b.cfg.name, this.W / 2, bbY - 8); c.shadowBlur = 0;
         c.fillStyle = 'rgba(8,7,11,.78)'; c.fillRect(x2 - 3, bbY - 1, w2 + 6, 13);
         c.fillStyle = '#33202c'; c.fillRect(x2, bbY + 2, w2, 7);
-        c.fillStyle = b.kind === 'warden' ? '#ff7a2f' : '#cfd5ef';
+        c.fillStyle = b.kind === 'warden' ? '#ff7a2f' : b.kind === 'sovereign' ? '#c9a23b' : '#cfd5ef';
         c.fillRect(x2, bbY + 2, w2 * (b.hp / b.maxHp), 7);
         c.strokeStyle = '#56505f'; c.lineWidth = 1; c.strokeRect(x2 - 3, bbY - 1, w2 + 6, 13);
         if (!this._hudRects.enemyhp) this._hudRects.enemyhp = { x: x2 - 3, y: bbY - 1, w: w2 + 6, h: 13 };
@@ -841,6 +1024,11 @@ RB.define('render', function (require) {
       if (shep && !shep.dead && shep.fightT > CONFIG.shepherd.enrageTime) {
         c.fillStyle = '#8fd9a0'; c.font = 'bold 13px Georgia'; c.textAlign = 'center';
         c.fillText('THE DEAD MARCH FASTER', this.W / 2, this.H - 104); c.textAlign = 'left';
+      }
+      const sov = Game.bosses.find(b => b.kind === 'sovereign');
+      if (sov && !sov.dead && sov.fightT > CONFIG.sovereign.enrageTime) {
+        c.fillStyle = '#e7cf86'; c.font = 'bold 13px Georgia'; c.textAlign = 'center';
+        c.fillText('THE HOST CHARGES WITHOUT MERCY', this.W / 2, this.H - 104); c.textAlign = 'left';
       }
       if (Game.inFight()) {
         c.fillStyle = '#7d7390'; c.font = '13px Georgia'; c.textAlign = 'right';

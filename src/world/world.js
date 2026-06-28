@@ -32,6 +32,14 @@ RB.define('world', function (require) {
             x: Math.cos(a) * rr, z: Math.sin(a) * rr, rot: rand(-0.22, 0.22), s: rand(0.75, 1.35), tilt: rand(-0.12, 0.12) });
         }
       }
+      if (arenaCfg.banners) {                // throne hall: hanging war-banners around the rim (pure backdrop)
+        const R = arenaCfg.radius;
+        for (let i = 0; i < arenaCfg.banners; i++) {
+          const a = i / arenaCfg.banners * TAU + TAU / 16;
+          this.props.push({ prop: true, gkind: 'banner', x: Math.cos(a) * (R - 0.6), z: Math.sin(a) * (R - 0.6),
+            rot: 0, s: rand(0.95, 1.2), tilt: 0 });
+        }
+      }
     },
     clampPoint(p, pad = 0.5) {
       const a = this.arena; let clamped = false;
