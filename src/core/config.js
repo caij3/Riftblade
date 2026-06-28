@@ -81,7 +81,7 @@ RB.define('config', function () {
       enrageTime: 420, enrageLanceMult: 1.5,
       coreRiftstrikeMult: 1.5,        // N7-interrupt Riftstrike (coreExposed) deals 2x
       riftstrikeNoStagger: true,      // Boss-3 exception: pinned, not staggered (R-NEC-06)
-      behavior: { approachDist: 6.0, graveStepRange: 3.5, n5Range: 4, n7Interval: 12.0 },
+      behavior: { approachDist: 6.0, graveStepRange: 3.5, n5Range: 4, n7Interval: 18.0 },
       risen: {
         hp: 24, hpBloated: 24, killStamina: 0, speed: 3.0, maxAlive: 5,
         burstTelegraph: 0.5, burstRadius: 3.0, burstDamage: 18,
