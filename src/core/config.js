@@ -160,7 +160,7 @@ RB.define('config', function () {
         shepherd: { label: 'Shepherd', theme: 'ossuary', music: 'shepherd', spawn: [0, 10],
                   intro: 'OSSAREN HERDS THE DEAD',            victory: 'THE OSSUARY GOES STILL' },
         sovereign: { label: 'Sovereign', theme: 'throne', music: 'sovereign', spawn: [0, 9],
-                  intro: 'THE IRON SOVEREIGN DOES NOT RISE FROM HIS THRONE', victory: 'THE CROWN ROLLS FROM THE DAIS' }
+                  intro: 'THE IRON SOVEREIGN DOES NOT RISE FROM HIS THRONE', victory: 'THE CROWN HAS FALLEN' }
       }
     },
     tutorial: { arena: { type: 'circle', radius: 12 }, dummyHp: 80 }
